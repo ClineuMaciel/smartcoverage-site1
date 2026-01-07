@@ -1,1 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Do Not Sell or Share My Personal Information</title>
+</head>
+<body style="font-family:system-ui;max-width:860px;margin:40px auto;padding:0 16px;line-height:1.5">
+  <h1>Do Not Sell or Share My Personal Information</h1>
+  <p>Submit your email and/or phone number to opt out of the sale or sharing of your personal information for lead generation.</p>
+
+  <form id="dnsForm">
+    <label>Email (optional)<br><input type="email" name="email" style="width:100%;padding:10px"></label><br><br>
+    <label>Phone (optional)<br><input type="tel" name="phone" style="width:100%;padding:10px"></label><br><br>
+    <label><input type="checkbox" required> I am the consumer or authorized to submit this request.</label><br><br>
+    <button type="submit" style="padding:10px 14px">Submit Opt-Out</button>
+  </form>
+
+  <p id="msg" style="margin-top:14px;font-weight:600"></p>
+
+  <script>
+    document.getElementById('dnsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const payload = {
+        email: fd.get('email') || "",
+        phone: fd.get('phone') || "",
+        request_type: "do-not-sell"
+      };
+
+      const res = await fetch('/.netlify/functions/optout', {
+        method: 'POST',
+        headers: {'content-type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+
+      document.getElementById('msg').textContent =
+        res.ok ? "Request received. You are now opted out." : "There was a problem. Please try again.";
+      if (res.ok) e.target.reset();
+    });
+  </script>
+</body>
+</html>
 
