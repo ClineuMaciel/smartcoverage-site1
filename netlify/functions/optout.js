@@ -56,8 +56,15 @@ export const handler = async (event) => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ ok: true })
     };
-  } catch (e) {
-    return { statusCode: 500, body: JSON.stringify({ error: "Server error", detail: String(e) }) };
-  }
-};
+ } catch (e) {
+  console.error("OPTOUT_ERROR", e);
 
+  return {
+    statusCode: 500,
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      error: "Server error",
+      detail: e?.message ? e.message : String(e)
+    })
+  };
+}
