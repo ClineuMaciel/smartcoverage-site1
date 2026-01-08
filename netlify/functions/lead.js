@@ -103,6 +103,14 @@ export const handler = async (event) => {
     // Later: forward to buyer(s) here (ping/post), AFTER compliance checks.
     return { statusCode: 200, headers: { "content-type": "application/json" }, body: JSON.stringify({ ok: true, status: "accepted" }) };
   } catch (e) {
-    return { statusCode: 500, body: JSON.stringify({ error: "Server error", detail: String(e) }) };
-  }
-};
+  console.error("LEAD_ERROR", e);
+
+  return {
+    statusCode: 500,
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      error: "Server error",
+      detail: e?.message ? e.message : String(e)
+    })
+  };
+}
