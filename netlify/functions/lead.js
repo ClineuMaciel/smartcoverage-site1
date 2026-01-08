@@ -1,5 +1,5 @@
 // netlify/functions/lead.js
-import { google } from "googleapis";
+const { google } = require("googleapis");
 
 function normalizeEmail(email = "") {
   return email.trim().toLowerCase();
@@ -38,7 +38,7 @@ async function isOptedOut(sheets, email, phone) {
   return false;
 }
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
   try {
     if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method Not Allowed" };
 
