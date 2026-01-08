@@ -1,22 +1,11 @@
-// netlify/functions/optout.js
 const { google } = require("googleapis");
 
-function normalizeEmail(email = "") {
-  return email.trim().toLowerCase();
-}
-function normalizePhone(phone = "") {
-  return phone.replace(/[^\d]/g, "");
+function normalizeEmail(email) {
+  return String(email || "").trim().toLowerCase();
 }
 
-async function getSheetsClient() {
-  const auth = new google.auth.JWT(
-    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    null,
-    (process.env.GOOGLE_PRIVATE_KEY || "").replace(/\\n/g, "\n"),
-    ["https://www.googleapis.com/auth/spreadsheets"]
-  );
-  await auth.authorize();
-  return google.sheets({ version: "v4", auth });
+function normalizePhone(phone) {
+  return String(phone || "").replace(/\D/g, "");
 }
 
 exports.handler = async (event) => {
@@ -26,45 +15,75 @@ exports.handler = async (event) => {
     }
 
     const body = JSON.parse(event.body || "{}");
-    const email = normalizeEmail(body.email || "");
-    const phone = normalizePhone(body.phone || "");
-    const requestType = body.request_type || "do-not-sell";
+    const email = normalizeEmail(body.email);
+    const phone = normalizePhone(body.phone);
+    const request_type = String(body.request_type || "do-not-sell");
 
     if (!email && !phone) {
-      return { statusCode: 400, body: JSON.stringify({ error: "Email or phone required" }) };
+      return {
+        statusCode: 400,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ok: false, error: "Email or phone is required" }),
+      };
     }
 
-    const sheets = await getSheetsClient();
+    const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
+    const CLIENT_EMAIL =
+      process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || process.env.GOOGLE_CLIENT_EMAIL;
+    const PRIVATE_KEY = (process.env.GOOGLE_PRIVATE_KEY || "").replace(/\\n/g, "\n");
+
+    if (!SHEET_ID || !CLIENT_EMAIL || !PRIVATE_KEY) {
+      return {
+        statusCode: 500,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          ok: false,
+          error: "Missing env vars",
+          missing: {
+            GOOGLE_SHEETS_ID: !SHEET_ID,
+            GOOGLE_SERVICE_ACCOUNT_EMAIL_or_GOOGLE_CLIENT_EMAIL: !CLIENT_EMAIL,
+            GOOGLE_PRIVATE_KEY: !PRIVATE_KEY,
+          },
+        }),
+      };
+    }
+
+    const auth = new google.auth.JWT({
+      email: CLIENT_EMAIL,
+      key: PRIVATE_KEY,
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    });
+
+    const sheets = google.sheets({ version: "v4", auth });
+
+    const row = [
+      new Date().toISOString(),
+      email,
+      phone,
+      request_type,
+      "submitted via do-not-sell page",
+    ];
 
     await sheets.spreadsheets.values.append({
-      spreadsheetId: process.env.GOOGLE_SHEETS_ID,
+      spreadsheetId: SHEET_ID,
       range: "OptOuts!A:E",
       valueInputOption: "RAW",
-      requestBody: {
-        values: [[
-          new Date().toISOString(),
-          email,
-          phone,
-          requestType,
-          body.notes || ""
-        ]]
-      }
+      insertDataOption: "INSERT_ROWS",
+      requestBody: { values: [row] },
     });
 
     return {
       statusCode: 200,
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ ok: true })
+      body: JSON.stringify({ ok: true }),
     };
- } catch (e) {
-  console.error("OPTOUT_ERROR", e);
+  } catch (e) {
+    console.error("OPTOUT_ERROR", e);
+    return {
+      statusCode: 500,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ok: false, error: "Server error", detail: String(e) }),
+    };
+  }
+};
 
-  return {
-    statusCode: 500,
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      error: "Server error",
-      detail: e?.message ? e.message : String(e)
-    })
-  };
-}
