@@ -1,5 +1,8 @@
 const { google } = require("googleapis");
 
+/**
+ * Normalizers
+ */
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
@@ -10,10 +13,16 @@ function normalizePhone(phone) {
 
 exports.handler = async (event) => {
   try {
+    // Only allow POST
     if (event.httpMethod !== "POST") {
-      return { statusCode: 405, body: "Method Not Allowed" };
+      return {
+        statusCode: 405,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ok: false, error: "Method Not Allowed" }),
+      };
     }
 
+    // Parse request body
     const body = JSON.parse(event.body || "{}");
 
     const email = normalizeEmail(body.email);
@@ -22,26 +31,30 @@ exports.handler = async (event) => {
     if (!email && !phone) {
       return {
         statusCode: 400,
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ ok: false, error: "Email or phone required" }),
       };
     }
-const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
 
-const CLIENT_EMAIL =
-  process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || process.env.GOOGLE_CLIENT_EMAIL;
+    // Env vars
+    const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
 
-let PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY || "";
+    const CLIENT_EMAIL =
+      process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || process.env.GOOGLE_CLIENT_EMAIL;
 
-// Convert literal "\n" into real newlines (safe even if there are none)
-PRIVATE_KEY = PRIVATE_KEY.replace(/\\n/g, "\n").trim();
+    let PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY || "";
 
-    if (!SHEET_ID || !CLIENT_EMAIL || !PRIVATE_KEY) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ ok: false, error: "Missing env vars" }),
-      };
-    }
+    // Convert literal "\n" into real newlines (Netlify often stores it this way)
+    PRIVATE_KEY = PRIVATE_KEY.replace(/\\n/g, "\n").trim();
 
+    // Helpful explicit errors (instead of vague 500)
+    if (!SHEET_ID) throw new Error("Missing GOOGLE_SHEETS_ID");
+    if (!CLIENT_EMAIL)
+      throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_EMAIL / GOOGLE_CLIENT_EMAIL");
+    if (!PRIVATE_KEY.includes("BEGIN PRIVATE KEY"))
+      throw new Error("GOOGLE_PRIVATE_KEY does not look like a PEM key");
+
+    // Auth (Google Sheets API)
     const auth = new google.auth.JWT({
       email: CLIENT_EMAIL,
       key: PRIVATE_KEY,
@@ -50,8 +63,13 @@ PRIVATE_KEY = PRIVATE_KEY.replace(/\\n/g, "\n").trim();
 
     const sheets = google.sheets({ version: "v4", auth });
 
-    /* ── CHECK OPTOUTS ───────────────────────────── */
-
+    /**
+     * CHECK OPTOUTS TAB (OptOuts!A:C)
+     * We assume:
+     *   Col A: created_at
+     *   Col B: email
+     *   Col C: phone
+     */
     const optoutRes = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
       range: "OptOuts!A:C",
@@ -62,25 +80,28 @@ PRIVATE_KEY = PRIVATE_KEY.replace(/\\n/g, "\n").trim();
     const isBlocked = optRows.some((row) => {
       const optEmail = normalizeEmail(row[1]);
       const optPhone = normalizePhone(row[2]);
+
       return (
         (email && optEmail && email === optEmail) ||
         (phone && optPhone && phone === optPhone)
       );
     });
 
-    /* ── SAVE LEAD ───────────────────────────── */
-
+    /**
+     * SAVE LEAD TO "Leads" TAB
+     * This assumes Leads!A:J exists.
+     */
     const row = [
-      new Date().toISOString(),
-      email,
-      phone,
-      body.first_name || "",
-      body.last_name || "",
-      body.zip || "",
-      body.lead_type || "",
-      body.source_url || "",
-      body.tcpa_text || "",
-      isBlocked ? "blocked" : "accepted",
+      new Date().toISOString(),          // A created_at
+      email,                             // B email
+      phone,                             // C phone
+      body.first_name || "",             // D first_name
+      body.last_name || "",              // E last_name
+      body.zip || "",                    // F zip
+      body.lead_type || "",              // G lead_type
+      body.source_url || "",             // H source_url
+      body.tcpa_text || "",              // I tcpa_text
+      isBlocked ? "blocked" : "accepted" // J status
     ];
 
     await sheets.spreadsheets.values.append({
@@ -101,9 +122,15 @@ PRIVATE_KEY = PRIVATE_KEY.replace(/\\n/g, "\n").trim();
     };
   } catch (e) {
     console.error("LEAD_ERROR", e);
+
     return {
       statusCode: 500,
-      body: JSON.stringify({ ok: false, error: "Server error", detail: String(e) }),
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        ok: false,
+        error: "Server error",
+        detail: String(e?.message || e),
+      }),
     };
   }
 };
