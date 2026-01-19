@@ -28,14 +28,15 @@ exports.handler = async (event) => {
     }
 
     const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
-    const CLIENT_EMAIL =
-      process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || process.env.GOOGLE_CLIENT_EMAIL;
-    let PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY || "";
 
-// Works whether Netlify stores literal "\n" or real newlines
-if (PRIVATE_KEY.includes("\\n")) {
-  PRIVATE_KEY = PRIVATE_KEY.replace(/\\n/g, "\n");
-}
+const CLIENT_EMAIL =
+  process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || process.env.GOOGLE_CLIENT_EMAIL;
+
+let PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY || "";
+
+// Convert literal "\n" into real newlines (safe even if there are none)
+PRIVATE_KEY = PRIVATE_KEY.replace(/\\n/g, "\n").trim();
+
 
     if (!SHEET_ID || !CLIENT_EMAIL || !PRIVATE_KEY) {
       return {
