@@ -1,42 +1,42 @@
-const { google } = require("googleapis");
+    const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
+    const CLIENT_EMAIL =
+      process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || process.env.GOOGLE_CLIENT_EMAIL;
 
-function normalizeEmail(email) {
-  return String(email || "").trim().toLowerCase();
-}
+    let PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY || "";
+    // Netlify often stores newlines as the two characters "\n"
+    PRIVATE_KEY = PRIVATE_KEY.replace(/\\n/g, "\n").trim();
 
-function normalizePhone(phone) {
-  return String(phone || "").replace(/\D/g, "");
-}
-
-exports.handler = async (event) => {
-  try {
-    if (event.httpMethod !== "POST") {
-      return { statusCode: 405, body: "Method Not Allowed" };
-    }
-
-    const body = JSON.parse(event.body || "{}");
-    const email = normalizeEmail(body.email);
-    const phone = normalizePhone(body.phone);
-    const request_type = String(body.request_type || "do-not-sell");
-
-    if (!email && !phone) {
+    if (!SHEET_ID) {
       return {
-        statusCode: 400,
+        statusCode: 500,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ok: false, error: "Email or phone is required" }),
+        body: JSON.stringify({ ok: false, error: "Missing GOOGLE_SHEETS_ID" }),
       };
     }
 
-    const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
+    if (!CLIENT_EMAIL) {
+      return {
+        statusCode: 500,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ok: false, error: "Missing GOOGLE_SERVICE_ACCOUNT_EMAIL / GOOGLE_CLIENT_EMAIL" }),
+      };
+    }
 
-const CLIENT_EMAIL =
-  process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || process.env.GOOGLE_CLIENT_EMAIL;
+    if (!PRIVATE_KEY.includes("BEGIN PRIVATE KEY")) {
+      return {
+        statusCode: 500,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ok: false, error: "GOOGLE_PRIVATE_KEY does not look like a PEM key" }),
+      };
+    }
 
-let PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY || "";
+    const auth = new google.auth.JWT({
+      email: CLIENT_EMAIL,
+      key: PRIVATE_KEY,
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+    });
 
-// Convert literal "\n" into real newlines (safe even if there are none)
-PRIVATE_KEY = PRIVATE_KEY.replace(/\\n/g, "\n").trim();
-
+    const sheets = google.sheets({ version: "v4", auth });
 
     if (!SHEET_ID || !CLIENT_EMAIL || !PRIVATE_KEY) {
       return {
