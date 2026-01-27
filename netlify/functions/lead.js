@@ -1,5 +1,34 @@
 const { google } = require("googleapis");
 
+async function postLeadToBuyer(leadPayload) {
+  const endpoint = process.env.BUYER_ENDPOINT;
+  const apiKey = process.env.BUYER_API_KEY || "";
+
+  if (!endpoint) {
+    console.log("BUYER_ENDPOINT not set, skipping buyer post.");
+    return { ok: false, skipped: true, reason: "BUYER_ENDPOINT not set" };
+  }
+
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        ...(apiKey ? { "authorization": `Bearer ${apiKey}` } : {}),
+      },
+      body: JSON.stringify(leadPayload),
+    });
+
+    const text = await res.text();
+    console.log("BUYER_RESPONSE", res.status, text);
+
+    return { ok: res.ok, status: res.status, body: text };
+  } catch (err) {
+    console.error("BUYER_POST_ERROR", err);
+    return { ok: false, error: String(err) };
+  }
+}
+
 /**
  * Normalizers
  */
@@ -104,22 +133,42 @@ exports.handler = async (event) => {
       isBlocked ? "blocked" : "accepted" // J status
     ];
 
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: SHEET_ID,
-      range: "Leads!A:J",
-      valueInputOption: "RAW",
-      insertDataOption: "INSERT_ROWS",
-      requestBody: { values: [row] },
-    });
+   await sheets.spreadsheets.values.append({
+  spreadsheetId: SHEET_ID,
+  range: "Leads!A:J",
+  valueInputOption: "RAW",
+  insertDataOption: "INSERT_ROWS",
+  requestBody: { values: [row] },
+});
 
-    return {
-      statusCode: 200,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        ok: true,
-        status: isBlocked ? "blocked" : "accepted",
-      }),
-    };
+// Only send to buyer if not blocked
+let buyerResult = null;
+if (!isBlocked) {
+  const buyerPayload = {
+    email,
+    phone,
+    first_name: body.first_name || "",
+    last_name: body.last_name || "",
+    zip: body.zip || "",
+    lead_type: body.lead_type || "",
+    source_url: body.source_url || "",
+    tcpa_text: body.tcpa_text || "",
+    created_at: row[0],
+  };
+
+  buyerResult = await postLeadToBuyer(buyerPayload);
+}
+
+return {
+  statusCode: 200,
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    ok: true,
+    status: isBlocked ? "blocked" : "accepted",
+    buyer: buyerResult,
+  }),
+};
+
   } catch (e) {
     console.error("LEAD_ERROR", e);
 
