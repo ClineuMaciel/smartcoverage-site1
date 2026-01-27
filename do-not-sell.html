@@ -1,18 +1,134 @@
-<form id="optout-form" method="POST" action="/.netlify/functions/optout">
-  <label>
-    Email (optional)
-    <input type="email" name="email" />
-  </label>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Do Not Sell or Share My Personal Information</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 700px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      line-height: 1.5;
+    }
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 0.5rem;
+    }
+    p {
+      margin: 0.5rem 0 1rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.75rem;
+    }
+    input[type="email"],
+    input[type="tel"] {
+      width: 100%;
+      padding: 0.5rem;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 4px;
+      border: none;
+      background-color: #2563eb;
+      color: white;
+    }
+    #optout-status {
+      margin-top: 1rem;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <h1>Do Not Sell or Share My Personal Information</h1>
+  <p>
+    Use this form to request that we do not sell or share your personal information
+    for lead generation purposes. We will use your email and/or phone to locate
+    your record in our systems.
+  </p>
 
-  <label>
-    Phone (optional)
-    <input type="tel" name="phone" />
-  </label>
+  <form id="optout-form">
+    <label>
+      Email (optional)
+      <input type="email" name="email" />
+    </label>
 
-  <label>
-    <input type="checkbox" name="confirm" required />
-    I am the consumer or authorized to submit this request.
-  </label>
+    <label>
+      Phone (optional)
+      <input type="tel" name="phone" />
+    </label>
 
-  <button type="submit">Submit Opt-Out</button>
-</form>
+    <label style="display:flex;gap:0.5rem;align-items:center;">
+      <input type="checkbox" name="confirm" required />
+      <span>I am the consumer or am authorized to submit this request.</span>
+    </label>
+
+    <button type="submit">Submit Opt-Out</button>
+  </form>
+
+  <div id="optout-status"></div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const form = document.getElementById("optout-form");
+      const statusEl = document.getElementById("optout-status");
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        statusEl.textContent = "Submitting your request...";
+        statusEl.style.color = "#333";
+
+        const formData = new FormData(form);
+        const email = (formData.get("email") || "").trim();
+        const phone = (formData.get("phone") || "").trim();
+
+        if (!email && !phone) {
+          statusEl.textContent = "Please provide an email or phone number.";
+          statusEl.style.color = "red";
+          return;
+        }
+
+        const payload = {
+          email,
+          phone,
+          request_type: "do-not-sell",
+        };
+
+        try {
+          const res = await fetch("/.netlify/functions/optout", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await res.json();
+
+          if (!data.ok) {
+            statusEl.textContent =
+              "We could not process your request. Please try again or contact support.";
+            statusEl.style.color = "red";
+            console.error("Opt-out error:", data);
+            return;
+          }
+
+          statusEl.textContent =
+            "Your opt-out request has been recorded. It may take some time to propagate through all systems.";
+          statusEl.style.color = "green";
+          form.reset();
+        } catch (err) {
+          console.error("Opt-out fetch error:", err);
+          statusEl.textContent =
+            "A network error occurred. Please check your connection and try again.";
+          statusEl.style.color = "red";
+        }
+      });
+    });
+  </script>
+</body>
+</html>
