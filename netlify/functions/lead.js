@@ -2,391 +2,259 @@
 
 const { google } = require("googleapis");
 
-// ---------- Helpers ----------
-
+/** Helper: normalize email */
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
 
+/** Helper: normalize phone to digits only */
 function normalizePhone(phone) {
-  return String(phone || "").replace(/\D/g, "").slice(0, 10);
+  return String(phone || "").replace(/\D/g, "");
 }
 
+/** Helper: pull client IP from Netlify headers */
 function getClientIp(event) {
   const h = event.headers || {};
   return (
     h["x-nf-client-connection-ip"] ||
+    (h["x-forwarded-for"] || "").split(",")[0].trim() ||
     h["client-ip"] ||
-    (h["x-forwarded-for"]
-      ? h["x-forwarded-for"].split(",")[0].trim()
-      : "") ||
     ""
   );
 }
 
-function getUserAgent(event) {
-  const h = event.headers || {};
-  return h["user-agent"] || h["User-Agent"] || "";
-}
-
-/**
- * Build a clean, standard lead object from the incoming body + request meta
- * This is what we will use for:
- *  - Writing to Google Sheets
- *  - Routing to buyers
- */
-function buildLeadObject(body, event) {
-  const timestamp = new Date().toISOString();
-  const ip = getClientIp(event);
-  const userAgent = getUserAgent(event);
+/** Build a buyer-friendly payload from the incoming body & context */
+function buildBuyerPayload(params) {
+  const {
+    body,
+    isBlocked,
+    timestampISO,
+    ip,
+    environment,
+  } = params;
 
   const email = normalizeEmail(body.email);
-  const phone = normalizePhone(body.phone);
-  const leadTypeRaw = String(body.lead_type || body.coverage_type || "auto");
-  const leadType = ["auto", "home", "both"].includes(leadTypeRaw)
-    ? leadTypeRaw
-    : "auto";
-
+  const phoneDigits = normalizePhone(body.phone);
+  const leadType = body.lead_type || body.coverage_type || "auto";
   const zip = String(body.zip || "").trim();
 
-  const sourceUrl =
-    body.source_url ||
-    event.headers?.referer ||
-    event.headers?.Referer ||
-    "https://searchnrate.com/";
+  const utm_source = body.utm_source || "";
+  const utm_medium = body.utm_medium || "";
+  const utm_campaign = body.utm_campaign || "";
+  const utm_term = body.utm_term || "";
+  const utm_content = body.utm_content || "";
+  const gclid = body.gclid || "";
 
-  const tcpaText = String(body.tcpa_text || "").trim();
-  const tcpaConsent = "yes"; // form cannot submit without the checkbox
+  const sourceUrl = body.source_url || "";
+  const userAgent = body.user_agent || "";
+  const tcpaText = (body.tcpa_text || "").trim();
+
+  // Simple lead id for buyer logs (can later be replaced with a DB id)
+  const leadId =
+    body.lead_id ||
+    `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   return {
-    lead_id: `sc_${timestamp}_${Math.random().toString(36).slice(2, 8)}`,
-    timestamp,
+    lead_id: leadId,
+    vertical: leadType, // ex: "auto", "home", "bundle"
+    lead_status: isBlocked ? "blocked" : "accepted",
 
-    product: {
-      lead_type: leadType,
-      vertical: "insurance"
-    },
-
-    consumer: {
-      first_name: String(body.first_name || "").trim(),
-      last_name: String(body.last_name || "").trim(),
+    contact: {
+      first_name: (body.first_name || "").trim(),
+      last_name: (body.last_name || "").trim(),
       email,
-      phone,
-      zip,
-      state: "", // optional later if you add state field
-      ip,
-      user_agent: userAgent,
-      is_mobile: /mobile/i.test(userAgent)
+      phone: phoneDigits,
     },
 
-    auto: {
-      vehicles: [
-        {
-          year: String(body.vehicle_year || "").trim(),
-          make: String(body.vehicle_make || "").trim(),
-          model: String(body.vehicle_model || "").trim()
-        }
-      ]
+    address: {
+      postal_code: zip,
+      country: "US",
     },
 
-    home: {
-      home_type: String(body.home_type || "").trim(),
-      ownership: String(body.home_ownership || "").trim()
+    vehicle: {
+      year: body.vehicle_year || "",
+      make: body.vehicle_make || "",
+      model: body.vehicle_model || "",
+    },
+
+    property: {
+      home_type: body.home_type || "",
+      ownership: body.home_ownership || "",
     },
 
     tcpa: {
       consent_text: tcpaText,
-      consent_timestamp: timestamp,
-      consent_ip: ip,
+      consent_timestamp: timestampISO,
+      consent_url: sourceUrl,
+      ip_address: ip,
+      user_agent: userAgent,
+      consent_channel: "web_form",
+    },
+
+    traffic: {
       source_url: sourceUrl,
-      opt_in_channels: ["phone", "sms", "email"]
+      landing_page: sourceUrl,
+      utm_source,
+      utm_medium,
+      utm_campaign,
+      utm_term,
+      utm_content,
+      gclid,
     },
 
-    tracking: {
-      utm_source: String(body.utm_source || ""),
-      utm_medium: String(body.utm_medium || ""),
-      utm_campaign: String(body.utm_campaign || ""),
-      utm_term: String(body.utm_term || ""),
-      utm_content: String(body.utm_content || ""),
-      gclid: String(body.gclid || ""),
-      sub_id: "" // you can set per-buyer later
-    }
-  };
-}
-
-// ---------- Google Sheets persistence ----------
-
-async function appendLeadToSheet(lead, sheets, sheetId, isBlocked) {
-  // This matches the header row we agreed on earlier:
-  // created_at | ip | user_agent | first_name | last_name | email | phone |
-  // zip | lead_type | tcpa_consent | tcpa_text | source_url | status
-
-  const row = [
-    lead.timestamp,
-    lead.consumer.ip,
-    lead.consumer.user_agent,
-    lead.consumer.first_name,
-    lead.consumer.last_name,
-    lead.consumer.email,
-    lead.consumer.phone,
-    lead.consumer.zip,
-    lead.product.lead_type,
-    "yes", // tcpa_consent
-    lead.tcpa.consent_text,
-    lead.tcpa.source_url,
-    isBlocked ? "blocked" : "accepted"
-  ];
-
-  await sheets.spreadsheets.values.append({
-    spreadsheetId: sheetId,
-    range: "Leads!A:M",
-    valueInputOption: "RAW",
-    insertDataOption: "INSERT_ROWS",
-    requestBody: { values: [row] }
-  });
-}
-
-async function isLeadBlocked(lead, sheets, sheetId) {
-  // OptOuts sheet format: created_at | email | phone
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: sheetId,
-    range: "OptOuts!A:C"
-  });
-
-  const rows = res.data.values || [];
-  const email = lead.consumer.email;
-  const phone = lead.consumer.phone;
-
-  const normEmail = normalizeEmail(email);
-  const normPhone = normalizePhone(phone);
-
-  return rows.some((row) => {
-    const rowEmail = normalizeEmail(row[1]);
-    const rowPhone = normalizePhone(row[2]);
-    return (
-      (normEmail && rowEmail && normEmail === rowEmail) ||
-      (normPhone && rowPhone && normPhone === rowPhone)
-    );
-  });
-}
-
-// ---------- Buyer routing skeleton (Netlify-only) ----------
-
-async function sendToBuyerAutoA(lead) {
-  const endpoint = process.env.BUYER_AUTO_A_ENDPOINT;
-  const apiKey = process.env.BUYER_AUTO_A_API_KEY;
-  const enabled = process.env.BUYER_AUTO_A_ENABLED === "true";
-
-  if (!enabled || !endpoint) {
-    console.log("BUYER_AUTO_A_SKIPPED", {
-      enabled,
-      hasEndpoint: Boolean(endpoint)
-    });
-    return { ok: false, reason: "disabled-or-missing-endpoint" };
-  }
-
-  // Minimal “universal” payload – adjust later per buyer’s exact spec
-  const payload = {
-    first_name: lead.consumer.first_name,
-    last_name: lead.consumer.last_name,
-    email: lead.consumer.email,
-    phone: lead.consumer.phone,
-    zip: lead.consumer.zip,
-    lead_type: lead.product.lead_type,
-    tcpa_text: lead.tcpa.consent_text,
-    tcpa_timestamp: lead.tcpa.consent_timestamp,
-    ip: lead.consumer.ip,
-    source: lead.tcpa.source_url,
-    sub_id: lead.tracking.sub_id || ""
-  };
-
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {})
+    compliance_flags: {
+      is_opted_out: !!isBlocked,
+      // Extend later with state rules, credit use, etc.
     },
-    body: JSON.stringify(payload)
-  });
 
-  const text = await res.text();
-  console.log("BUYER_AUTO_A_RESPONSE", {
-    status: res.status,
-    bodyPreview: text.slice(0, 300)
-  });
-
-  return { ok: res.ok, status: res.status };
-}
-
-async function sendToBuyerHomeA(lead) {
-  const endpoint = process.env.BUYER_HOME_A_ENDPOINT;
-  const apiKey = process.env.BUYER_HOME_A_API_KEY;
-  const enabled = process.env.BUYER_HOME_A_ENABLED === "true";
-
-  if (!enabled || !endpoint) {
-    console.log("BUYER_HOME_A_SKIPPED", {
-      enabled,
-      hasEndpoint: Boolean(endpoint)
-    });
-    return { ok: false, reason: "disabled-or-missing-endpoint" };
-  }
-
-  // Minimal payload – can be customized per buyer later
-  const payload = {
-    first_name: lead.consumer.first_name,
-    last_name: lead.consumer.last_name,
-    email: lead.consumer.email,
-    phone: lead.consumer.phone,
-    zip: lead.consumer.zip,
-    lead_type: lead.product.lead_type,
-    home_type: lead.home.home_type,
-    ownership: lead.home.ownership,
-    tcpa_text: lead.tcpa.consent_text,
-    tcpa_timestamp: lead.tcpa.consent_timestamp,
-    ip: lead.consumer.ip,
-    source: lead.tcpa.source_url,
-    sub_id: lead.tracking.sub_id || ""
-  };
-
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {})
+    meta: {
+      form_version: "v1-seo-2026-01",
+      site: "searchnrate.com",
+      environment,
     },
-    body: JSON.stringify(payload)
-  });
-
-  const text = await res.text();
-  console.log("BUYER_HOME_A_RESPONSE", {
-    status: res.status,
-    bodyPreview: text.slice(0, 300)
-  });
-
-  return { ok: res.ok, status: res.status };
+  };
 }
 
 /**
- * Router: decide where the lead should go based on lead_type
- * For now this is "safe": if anything fails, it only logs – user still gets 200.
+ * Netlify function: / .netlify / functions / lead
+ * 1) Checks opt-out sheet
+ * 2) Writes lead to "Leads" sheet
+ * 3) Builds buyerPayload and logs it (dry-run)
  */
-async function routeLead(lead) {
-  const type = lead.product.lead_type; // "auto" | "home" | "both"
-  const tasks = [];
-
-  if (type === "auto") {
-    tasks.push(sendToBuyerAutoA(lead));
-  }
-
-  if (type === "home") {
-    tasks.push(sendToBuyerHomeA(lead));
-  }
-
-  if (type === "both") {
-    // Option: split into auto + home for separate buyers
-    const autoLead = {
-      ...lead,
-      product: { ...lead.product, lead_type: "auto" }
-    };
-    const homeLead = {
-      ...lead,
-      product: { ...lead.product, lead_type: "home" }
-    };
-    tasks.push(sendToBuyerAutoA(autoLead));
-    tasks.push(sendToBuyerHomeA(homeLead));
-  }
-
-  if (!tasks.length) {
-    console.log("ROUTER_NO_TASKS", { lead_type: type });
-    return;
-  }
-
-  const results = await Promise.allSettled(tasks);
-  console.log("ROUTER_RESULTS", results);
-}
-
-// ---------- Main handler ----------
-
 exports.handler = async (event) => {
   try {
     if (event.httpMethod !== "POST") {
-      return { statusCode: 405, body: "Method Not Allowed" };
+      return {
+        statusCode: 405,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ok: false, error: "Method Not Allowed" }),
+      };
     }
 
     const body = JSON.parse(event.body || "{}");
 
     const email = normalizeEmail(body.email);
-    const phone = normalizePhone(body.phone);
+    const phoneDigits = normalizePhone(body.phone);
 
-    if (!email && !phone) {
+    if (!email && !phoneDigits) {
       return {
         statusCode: 400,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           ok: false,
-          error: "Email or phone is required"
-        })
+          error: "Email or phone required",
+        }),
       };
     }
 
-    // Build our master lead object (standard format)
-    const lead = buildLeadObject(body, event);
-
-    // env vars (already set in Netlify)
     const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
     const CLIENT_EMAIL =
       process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ||
       process.env.GOOGLE_CLIENT_EMAIL;
+
     let PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY || "";
 
-    // Support both literal "\n" and real newlines
+    // Convert literal "\n" into real newlines (safe either way)
     PRIVATE_KEY = PRIVATE_KEY.replace(/\\n/g, "\n").trim();
 
     if (!SHEET_ID || !CLIENT_EMAIL || !PRIVATE_KEY) {
       console.error("ENV_MISSING", {
-        hasSheet: !!SHEET_ID,
-        hasClientEmail: !!CLIENT_EMAIL,
-        hasKey: !!PRIVATE_KEY
+        SHEET_ID: !!SHEET_ID,
+        CLIENT_EMAIL: !!CLIENT_EMAIL,
+        PRIVATE_KEY: PRIVATE_KEY ? "present" : "missing",
       });
       return {
         statusCode: 500,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           ok: false,
-          error: "Server configuration error"
-        })
+          error: "Missing Google Sheets configuration",
+        }),
       };
     }
 
     const auth = new google.auth.JWT({
       email: CLIENT_EMAIL,
       key: PRIVATE_KEY,
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"]
+      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     });
 
     const sheets = google.sheets({ version: "v4", auth });
 
-    // 1) Check OptOuts
-    const blocked = await isLeadBlocked(lead, sheets, SHEET_ID);
+    /* ── 1) CHECK OPTOUTS SHEET ─────────────────────────────── */
 
-    // 2) Write to Leads sheet
-    await appendLeadToSheet(lead, sheets, SHEET_ID, blocked);
+    const optoutRes = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: "OptOuts!A:C", // [timestamp, email, phone]
+    });
 
-    // 3) Route to buyers (fire-and-forget from user perspective)
-    try {
-      await routeLead(lead);
-    } catch (routeErr) {
-      console.error("ROUTE_ERROR", routeErr);
-      // Do NOT fail the response – you've already captured the lead.
-    }
+    const optRows = optoutRes.data.values || [];
 
+    const isBlocked = optRows.some((row) => {
+      const optEmail = normalizeEmail(row[1]);
+      const optPhone = normalizePhone(row[2]);
+      return (
+        (email && optEmail && email === optEmail) ||
+        (phoneDigits && optPhone && phoneDigits === optPhone)
+      );
+    });
+
+    /* ── 2) WRITE TO LEADS SHEET ───────────────────────────── */
+
+    const timestampISO = new Date().toISOString();
+    const zip = String(body.zip || "").trim();
+    const leadType = body.lead_type || body.coverage_type || "auto";
+    const sourceUrl = body.source_url || "";
+    const tcpaText = (body.tcpa_text || "").trim();
+
+    // Keep existing columns for compatibility (A:J)
+    const row = [
+      timestampISO,           // A: timestamp
+      email,                  // B: email
+      phoneDigits,            // C: phone
+      body.first_name || "",  // D: first name
+      body.last_name || "",   // E: last name
+      zip,                    // F: zip
+      leadType,               // G: lead_type / coverage_type
+      sourceUrl,              // H: source_url
+      tcpaText,               // I: tcpa_text
+      isBlocked ? "blocked" : "accepted", // J: status
+    ];
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SHEET_ID,
+      range: "Leads!A:J",
+      valueInputOption: "RAW",
+      insertDataOption: "INSERT_ROWS",
+      requestBody: { values: [row] },
+    });
+
+    /* ── 3) BUILD BUYER PAYLOAD (DRY RUN) ──────────────────── */
+
+    const ip = getClientIp(event);
+    const environment = process.env.CONTEXT || "production";
+
+    const buyerPayload = buildBuyerPayload({
+      body,
+      isBlocked,
+      timestampISO,
+      ip,
+      environment,
+    });
+
+    // DRY RUN: just log what we'd send to buyers
+    // You can later replace this with actual POST requests to buyer APIs.
+    console.log("BUYER_PAYLOAD_DRY_RUN", JSON.stringify(buyerPayload));
+
+    // If you want, you can return the lead_id so front-end / logs can match:
     return {
       statusCode: 200,
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         ok: true,
-        status: blocked ? "blocked" : "accepted"
-      })
+        status: isBlocked ? "blocked" : "accepted",
+        lead_id: buyerPayload.lead_id,
+      }),
     };
   } catch (e) {
     console.error("LEAD_ERROR", e);
@@ -396,9 +264,8 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         ok: false,
         error: "Server error",
-        detail: String(e)
-      })
+        detail: String(e),
+      }),
     };
   }
 };
-
