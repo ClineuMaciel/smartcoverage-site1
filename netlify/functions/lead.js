@@ -2,17 +2,17 @@
 
 const { google } = require("googleapis");
 
-/** Helper: normalize email */
+/** Normalize email */
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
 
-/** Helper: normalize phone to digits only */
+/** Normalize phone to digits only */
 function normalizePhone(phone) {
   return String(phone || "").replace(/\D/g, "");
 }
 
-/** Helper: pull client IP from Netlify headers */
+/** Get client IP from Netlify headers */
 function getClientIp(event) {
   const h = event.headers || {};
   return (
@@ -23,7 +23,27 @@ function getClientIp(event) {
   );
 }
 
-/** Build a buyer-friendly payload from the incoming body & context */
+/**
+ * BUYER CONFIG
+ * You can point these URLs to any buyer / aggregator (EverQuote-style webhook).
+ * Control which verticals they receive using `verticals`.
+ */
+const BUYER_CONFIG = [
+  {
+    name: "AutoBuyerPrimary",
+    verticals: ["auto", "bundle"], // receives auto + bundles
+    envUrlKey: "BUYER_AUTO_URL",
+    envTokenKey: "BUYER_AUTO_TOKEN",
+  },
+  {
+    name: "HomeBuyerPrimary",
+    verticals: ["home", "bundle"], // receives home + bundles
+    envUrlKey: "BUYER_HOME_URL",
+    envTokenKey: "BUYER_HOME_TOKEN",
+  },
+];
+
+/** Build a buyer-friendly payload */
 function buildBuyerPayload(params) {
   const {
     body,
@@ -49,14 +69,14 @@ function buildBuyerPayload(params) {
   const userAgent = body.user_agent || "";
   const tcpaText = (body.tcpa_text || "").trim();
 
-  // Simple lead id for buyer logs (can later be replaced with a DB id)
+  // Simple lead id (can swap for DB id later)
   const leadId =
     body.lead_id ||
     `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   return {
     lead_id: leadId,
-    vertical: leadType, // ex: "auto", "home", "bundle"
+    vertical: leadType, // "auto", "home", "bundle"
     lead_status: isBlocked ? "blocked" : "accepted",
 
     contact: {
@@ -104,7 +124,6 @@ function buildBuyerPayload(params) {
 
     compliance_flags: {
       is_opted_out: !!isBlocked,
-      // Extend later with state rules, credit use, etc.
     },
 
     meta: {
@@ -116,10 +135,98 @@ function buildBuyerPayload(params) {
 }
 
 /**
- * Netlify function: / .netlify / functions / lead
- * 1) Checks opt-out sheet
- * 2) Writes lead to "Leads" sheet
- * 3) Builds buyerPayload and logs it (dry-run)
+ * Send to configured buyers.
+ * - Controlled by BUYER_SEND_MODE env:
+ *   - "dry-run" (default): just logs, does NOT call external endpoints.
+ *   - "live": actually POSTs JSON to buyer URLs.
+ */
+async function sendToBuyers(buyerPayload, { leadType, isBlocked }) {
+  const mode = (process.env.BUYER_SEND_MODE || "dry-run").toLowerCase();
+  const results = [];
+
+  // Respect opt-out: never send blocked records
+  if (isBlocked) {
+    console.log("BUYER_SEND_SKIPPED_BLOCKED", {
+      lead_id: buyerPayload.lead_id,
+    });
+    return results;
+  }
+
+  const eligibleBuyers = BUYER_CONFIG.filter((b) =>
+    b.verticals.includes(leadType)
+  );
+
+  if (!eligibleBuyers.length) {
+    console.log("BUYER_SEND_NO_MATCHING_BUYERS", { leadType });
+    return results;
+  }
+
+  for (const buyer of eligibleBuyers) {
+    const url = process.env[buyer.envUrlKey];
+
+    if (!url) {
+      results.push({
+        buyer: buyer.name,
+        status: "skipped",
+        reason: "missing_url_env",
+      });
+      continue;
+    }
+
+    const token = process.env[buyer.envTokenKey] || "";
+    const headers = {
+      "content-type": "application/json",
+    };
+    if (token) {
+      headers["authorization"] = `Bearer ${token}`;
+    }
+
+    if (mode === "dry-run") {
+      // No external call; just log what WOULD be sent
+      console.log("BUYER_DRY_RUN", {
+        buyer: buyer.name,
+        url,
+        payload: buyerPayload,
+      });
+      results.push({ buyer: buyer.name, status: "dry-run" });
+      continue;
+    }
+
+    // LIVE MODE: actually POST to the buyer endpoint
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(buyerPayload),
+      });
+      const text = await res.text().catch(() => "");
+      console.log("BUYER_SEND_RESULT", {
+        buyer: buyer.name,
+        status: res.status,
+        body: text.slice(0, 500),
+      });
+
+      results.push({
+        buyer: buyer.name,
+        status: res.ok ? "sent" : "error",
+        httpStatus: res.status,
+      });
+    } catch (err) {
+      console.error("BUYER_SEND_ERROR", buyer.name, err);
+      results.push({
+        buyer: buyer.name,
+        status: "error",
+        error: String(err),
+      });
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Netlify Function handler
+ * Path: /.netlify/functions/lead
  */
 exports.handler = async (event) => {
   try {
@@ -151,10 +258,9 @@ exports.handler = async (event) => {
     const CLIENT_EMAIL =
       process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ||
       process.env.GOOGLE_CLIENT_EMAIL;
-
     let PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY || "";
 
-    // Convert literal "\n" into real newlines (safe either way)
+    // Convert literal "\n" to real newlines (safe either way)
     PRIVATE_KEY = PRIVATE_KEY.replace(/\\n/g, "\n").trim();
 
     if (!SHEET_ID || !CLIENT_EMAIL || !PRIVATE_KEY) {
@@ -181,11 +287,11 @@ exports.handler = async (event) => {
 
     const sheets = google.sheets({ version: "v4", auth });
 
-    /* ── 1) CHECK OPTOUTS SHEET ─────────────────────────────── */
+    /* ── 1) CHECK OPTOUTS SHEET ─────────────────────────── */
 
     const optoutRes = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: "OptOuts!A:C", // [timestamp, email, phone]
+      range: "OptOuts!A:C",
     });
 
     const optRows = optoutRes.data.values || [];
@@ -199,7 +305,7 @@ exports.handler = async (event) => {
       );
     });
 
-    /* ── 2) WRITE TO LEADS SHEET ───────────────────────────── */
+    /* ── 2) WRITE TO LEADS SHEET ───────────────────────── */
 
     const timestampISO = new Date().toISOString();
     const zip = String(body.zip || "").trim();
@@ -207,17 +313,16 @@ exports.handler = async (event) => {
     const sourceUrl = body.source_url || "";
     const tcpaText = (body.tcpa_text || "").trim();
 
-    // Keep existing columns for compatibility (A:J)
     const row = [
-      timestampISO,           // A: timestamp
-      email,                  // B: email
-      phoneDigits,            // C: phone
-      body.first_name || "",  // D: first name
-      body.last_name || "",   // E: last name
-      zip,                    // F: zip
-      leadType,               // G: lead_type / coverage_type
-      sourceUrl,              // H: source_url
-      tcpaText,               // I: tcpa_text
+      timestampISO,            // A: timestamp
+      email,                   // B: email
+      phoneDigits,             // C: phone
+      body.first_name || "",   // D: first name
+      body.last_name || "",    // E: last name
+      zip,                     // F: zip
+      leadType,                // G: lead_type / coverage_type
+      sourceUrl,               // H: source_url
+      tcpaText,                // I: tcpa_text
       isBlocked ? "blocked" : "accepted", // J: status
     ];
 
@@ -229,7 +334,7 @@ exports.handler = async (event) => {
       requestBody: { values: [row] },
     });
 
-    /* ── 3) BUILD BUYER PAYLOAD (DRY RUN) ──────────────────── */
+    /* ── 3) BUILD BUYER PAYLOAD & ROUTE ─────────────────── */
 
     const ip = getClientIp(event);
     const environment = process.env.CONTEXT || "production";
@@ -242,11 +347,13 @@ exports.handler = async (event) => {
       environment,
     });
 
-    // DRY RUN: just log what we'd send to buyers
-    // You can later replace this with actual POST requests to buyer APIs.
-    console.log("BUYER_PAYLOAD_DRY_RUN", JSON.stringify(buyerPayload));
+    // Send (or dry-run log) to buyers
+    const buyerResults = await sendToBuyers(buyerPayload, {
+      leadType,
+      isBlocked,
+    });
 
-    // If you want, you can return the lead_id so front-end / logs can match:
+    // Return simple response to front-end
     return {
       statusCode: 200,
       headers: { "content-type": "application/json" },
@@ -254,6 +361,7 @@ exports.handler = async (event) => {
         ok: true,
         status: isBlocked ? "blocked" : "accepted",
         lead_id: buyerPayload.lead_id,
+        buyer_results: buyerResults, // helpful for debugging / Postman tests
       }),
     };
   } catch (e) {
