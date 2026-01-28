@@ -3,25 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <title>SmartCoverage | Compare Auto & Home Insurance Quotes Online</title>
-
-  <!-- Core SEO -->
-  <meta name="description" content="Compare auto and home insurance quotes online in minutes. One simple form, multiple providers, no fees, no obligation. SearchnRate SmartCoverage helps you shop smarter and save." />
-  <meta name="robots" content="index,follow" />
-  <link rel="canonical" href="https://searchnrate.com/" />
-
-  <!-- Open Graph (for social + ad previews) -->
-  <meta property="og:title" content="SmartCoverage | Compare Auto & Home Insurance Quotes" />
-  <meta property="og:description" content="One quick form, multiple insurance providers. Compare auto & home insurance offers online, free and with no obligation." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://searchnrate.com/" />
-  <!-- If you ever add an OG image, place it in /assets/ and update this: -->
-  <meta property="og:image" content="https://searchnrate.com/assets/og-image.png" />
-
-  <!-- Theme / brand color (used by browsers + some ad systems) -->
+  <title>SmartCoverage — Compare Auto & Home Insurance Quotes</title>
+  <meta name="description" content="Free auto & home insurance quotes. One form, multiple providers. Private, secure, no obligation." />
   <meta name="theme-color" content="#2e6bff" />
-
+  <link rel="canonical" href="https://searchnrate.com/" />
   <style>
     :root{
       --bg: #0b1020;
@@ -41,82 +26,40 @@
       padding:0;
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
       background:#f6f8fb;
-      color:var(--ink);
+      color:var(--ink)
     }
     .container{max-width:1120px;margin:0 auto;padding:0 16px}
-    .site-header{
-      background:var(--bg);
-      color:#fff;
-      position:sticky;
-      top:0;
-      z-index:10;
-    }
-    .site-header .inner{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding:14px 0;
-    }
-    .brand{
-      display:flex;
-      gap:12px;
-      align-items:center;
-    }
+    .site-header{background:var(--bg);color:#fff;position:sticky;top:0;z-index:10}
+    .site-header .inner{display:flex;justify-content:space-between;align-items:center;padding:14px 0}
+    .brand{display:flex;gap:12px;align-items:center}
     .brand .logo{font-size:28px}
     .brand .text{display:flex;flex-direction:column;line-height:1}
     .brand .text strong{font-weight:800}
     .brand .text span{font-size:12px;color:#c9d3ef}
-    .top-links a{
-      color:#c9d3ef;
-      text-decoration:none;
-      margin-left:14px;
-      font-size:14px;
-    }
+    .top-links a{color:#c9d3ef;text-decoration:none;margin-left:14px;font-size:14px}
     .top-links a:hover{text-decoration:underline}
 
-    .hero{
-      padding:40px 0;
-      background:linear-gradient(180deg,#eef3ff 0%, #f6f8fb 100%);
-    }
-    .hero-grid{
-      display:grid;
-      grid-template-columns:1.15fr 1fr;
-      gap:32px;
-      align-items:center;
-    }
-    .hero h1{
-      font-size:40px;
-      margin:0 0 10px;
-    }
-    .sub{
-      font-size:18px;
-      color:var(--muted);
-    }
-    .value-bullets{
-      margin:16px 0 0;
-      padding-left:18px;
-    }
+    .hero{padding:40px 0;background:linear-gradient(180deg,#eef3ff 0%, #f6f8fb 100%)}
+    .hero-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:32px;align-items:center}
+    .hero h1{font-size:40px;margin:0 0 10px}
+    .sub{font-size:18px;color:var(--muted)}
+    .value-bullets{margin:16px 0 0;padding-left:18px}
     .value-bullets li{margin:6px 0}
-    .trust-row{
-      display:flex;
-      gap:8px;
-      margin-top:12px;
-      flex-wrap:wrap;
-    }
+    .trust-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
     .trust-badge{
       background:#fff;
       border:1px solid #e6ebf5;
       border-radius:999px;
       padding:6px 10px;
       font-size:12px;
-      color:#334;
+      color:#334
     }
 
     .card{
       background:var(--card);
       border:1px solid #e6ebf5;
       border-radius:16px;
-      box-shadow:0 10px 30px rgba(3,10,30,.06);
+      box-shadow:0 10px 30px rgba(3,10,30,.06)
     }
     .hero-form-card{padding:18px}
 
@@ -127,12 +70,12 @@
       padding:12px;
       border:1px solid #d8dfec;
       border-radius:10px;
-      background:#fff;
+      background:#fff
     }
     input:focus,select:focus{
       border-color:var(--primary);
       box-shadow:0 0 0 4px var(--ring);
-      outline:none;
+      outline:none
     }
     .btn{
       display:inline-flex;
@@ -142,19 +85,14 @@
       padding:12px 16px;
       font-weight:750;
       border:1px solid transparent;
-      cursor:pointer;
+      cursor:pointer
     }
     .btn.primary{background:var(--primary);color:var(--primary-ink)}
     .btn.ghost{background:#fff;border-color:#d8dfec;color:#1c2e4a}
     .btn.block{width:100%}
     .btn:focus{outline:3px solid var(--focus)}
 
-    .pill-group{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      margin:6px 0 10px;
-    }
+    .pill-group{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}
     .pill{
       border:1px solid #d8dfec;
       border-radius:999px;
@@ -162,93 +100,85 @@
       font-weight:650;
       cursor:pointer;
       background:#fff;
-      user-select:none;
+      user-select:none
     }
-    input[type="radio"].visually-hidden{
-      position:absolute;
-      left:-9999px;
-    }
+    input[type="radio"].visually-hidden{position:absolute;left:-9999px}
     input[type="radio"].visually-hidden:checked + label.pill{
       background:#e9efff;
-      border-color:#9db5ff;
+      border-color:#9db5ff
     }
 
-    .form-step{
-      display:none;
-      animation:fade .3s ease;
-    }
+    .form-step{display:none;animation:fade .3s ease}
     .form-step.active{display:block}
     @keyframes fade{
       from{opacity:.001;transform:translateY(6px)}
       to{opacity:1;transform:none}
     }
 
-    .step-controls{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      margin-top:8px;
-    }
+    .step-controls{display:flex;justify-content:space-between;gap:10px;margin-top:8px}
     .micro{font-size:12px;color:var(--muted);margin:8px 0 0}
     .tiny{font-size:11px;color:#6b768a}
     .error{color:var(--danger);margin-top:10px}
     .success{color:var(--success)}
 
-    /* Logos / trust brands */
+    /* old logo classes (kept just in case) */
+    .logos{padding:16px 0}
+    .logo-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:8px}
+    .logo-placeholder{
+      background:#fff;
+      border:1px dashed #cdd6ea;
+      border-radius:10px;
+      padding:16px;
+      text-align:center;
+      color:#95a1b8
+    }
+
+    /* NEW trusted logos row */
     .trusted{
-      background:#f2f5ff;
-      padding:24px 0;
+      padding:24px 16px 8px;
+      background:#f6f8fb;
     }
     .trusted-inner{
-      max-width:960px;
+      max-width:1120px;
       margin:0 auto;
-      padding:0 16px;
-      text-align:center;
+      padding:12px 0 4px;
+      border-top:1px solid #e1e6f2;
     }
     .trusted-title{
-      font-weight:700;
-      font-size:18px;
-      margin-bottom:12px;
+      font-size:14px;
+      font-weight:600;
+      color:#4a5670;
+      margin:0 0 10px;
     }
     .logo-row{
       display:flex;
       flex-wrap:wrap;
-      justify-content:center;
+      gap:12px;
       align-items:center;
-      gap:16px;
-      margin-bottom:10px;
     }
     .logo-row img{
       max-height:32px;
-      object-fit:contain;
-      filter:grayscale(0.1);
+      width:auto;
+      display:block;
+      background:#fff;
+      border-radius:8px;
+      padding:6px 10px;
+      border:1px solid #e3e8f5;
     }
     .trusted-disclaimer{
+      margin:10px 0 0;
       font-size:11px;
-      color:#6b768a;
-      max-width:640px;
-      margin:0 auto;
+      color:#7b869b;
     }
 
-    .why{
-      padding:22px 0 36px;
-    }
-    .grid2{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:24px;
-    }
-    .steps{
-      counter-reset:step;
-      list-style:none;
-      padding-left:0;
-      margin:0;
-    }
+    .why{padding:22px 0 36px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    .steps{counter-reset:step;list-style:none;padding-left:0;margin:0}
     .steps li{
       counter-increment:step;
       margin:12px 0;
       padding-left:28px;
-      position:relative;
+      position:relative
     }
     .steps li::before{
       content:counter(step);
@@ -263,41 +193,61 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      font-size:12px;
+      font-size:12px
     }
 
-    .faq{
-      padding:16px 0 40px;
-    }
+    .faq{padding:16px 0 40px}
     .faq details{
       background:#fff;
       border:1px solid #e6ebf5;
       border-radius:10px;
       padding:10px 14px;
-      margin:8px 0;
+      margin:8px 0
     }
-    .faq summary{
-      cursor:pointer;
-      font-weight:650;
+    .faq summary{cursor:pointer;font-weight:650}
+
+    /* NEW SEO content block */
+    .seo-content{
+      padding:32px 0;
+      background:#ffffff;
+    }
+    .seo-content h2{
+      margin-top:0;
+      margin-bottom:10px;
+    }
+    .seo-content h3{
+      margin-top:22px;
+      margin-bottom:8px;
+    }
+    .seo-content p{
+      max-width:720px;
+      line-height:1.6;
+    }
+    .seo-content ul{
+      max-width:720px;
+      padding-left:20px;
+    }
+    .seo-content li{
+      margin:4px 0;
     }
 
     .site-footer{
       background:#0b1020;
       color:#c9d3ef;
       padding:24px 0;
-      margin-top:10px;
+      margin-top:10px
     }
     .footer-grid{
       display:grid;
       grid-template-columns:1fr auto;
       gap:24px;
-      align-items:center;
+      align-items:center
     }
     .footer-links a{
       color:#c9d3ef;
       text-decoration:none;
       margin-left:12px;
-      font-size:13px;
+      font-size:14px;
     }
     .footer-links a:hover{text-decoration:underline}
 
@@ -307,16 +257,14 @@
       border-radius:14px;
       max-width:720px;
       width:92vw;
-      box-shadow:0 24px 64px rgba(0,0,0,.25);
+      box-shadow:0 24px 64px rgba(0,0,0,.25)
     }
-    dialog::backdrop{
-      background:rgba(0,0,0,.4);
-    }
+    dialog::backdrop{background:rgba(0,0,0,.4)}
     .modal-header{
       display:flex;
       justify-content:space-between;
       align-items:center;
-      gap:12px;
+      gap:12px
     }
     .modal-header h3{margin:0}
     .close-btn{
@@ -324,7 +272,7 @@
       background:#eef3ff;
       border-radius:10px;
       padding:8px 12px;
-      cursor:pointer;
+      cursor:pointer
     }
 
     .conditional-block{display:none}
@@ -332,6 +280,7 @@
     @media (max-width: 960px){
       .hero-grid{grid-template-columns:1fr}
       .footer-grid{grid-template-columns:1fr}
+      .top-links a{margin-left:8px;font-size:13px}
       .hero h1{font-size:32px}
     }
   </style>
@@ -341,14 +290,8 @@
   {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": "SmartCoverage - SearchnRate",
-    "url": "https://searchnrate.com/",
-    "description": "Compare auto and home insurance quotes online with SmartCoverage from SearchnRate. One form, multiple providers.",
-    "publisher": {
-      "@type": "Organization",
-      "name": "SmartCoverage",
-      "url": "https://searchnrate.com/"
-    },
+    "name": "SmartCoverage",
+    "url": "https://searchnrate.com",
     "potentialAction": {
       "@type": "SearchAction",
       "target": "https://searchnrate.com/?q={query}",
@@ -365,18 +308,18 @@
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "How does SmartCoverage work?",
+        "name": "How does this service work?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Complete the quick online form and we connect you with insurance providers and licensed agents who can offer auto and home insurance quotes. SmartCoverage is not an insurer; we match you with partners so you can compare options."
+          "text": "Complete the quick form and we connect you to insurance providers and licensed agents who can provide quotes. We are not an insurer; we match you with partners."
         }
       },
       {
         "@type": "Question",
-        "name": "Is SmartCoverage free to use?",
+        "name": "Is this really free?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes. SmartCoverage and SearchnRate do not charge consumers. We may be compensated by providers when you interact with their offers."
+          "text": "Yes. We do not charge consumers. Providers may compensate us when you interact with them."
         }
       },
       {
@@ -384,7 +327,7 @@
         "name": "Will I be contacted by multiple companies?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "We may share your information with multiple providers and licensed insurance agents so you can compare quotes. With your consent, they may contact you by phone, SMS, and email. You can opt out at any time."
+          "text": "We may share your information with multiple providers so you can compare options. You can opt out anytime."
         }
       }
     ]
@@ -398,12 +341,13 @@
         <div class="logo" aria-hidden="true">🚗🏠</div>
         <div class="text">
           <strong>SmartCoverage</strong>
-          <span>SearchnRate insurance quotes</span>
+          <span>Quotes you can compare</span>
         </div>
       </div>
       <nav class="top-links">
         <a href="#" id="openPrivacy">Privacy</a>
         <a href="#" id="openTerms">Terms</a>
+        <!-- Fallback to actual page if JS fails -->
         <a href="/do-not-sell.html" id="openCCPA">Do Not Sell/Share</a>
       </nav>
     </div>
@@ -413,39 +357,40 @@
     <section class="hero">
       <div class="container hero-grid">
         <div>
-          <h1>Compare Auto &amp; Home Insurance Quotes in Minutes</h1>
-          <p class="sub">
-            One online form. Multiple offers from licensed insurance providers.
-            No fees, no obligation. Powered by SearchnRate SmartCoverage.
-          </p>
+          <h1>Compare Auto & Home Insurance Quotes in Minutes</h1>
+          <p class="sub">One form. Multiple offers from licensed providers. No fees, no obligation.</p>
           <ul class="value-bullets">
-            <li>Shop multiple auto &amp; home insurance carriers at once</li>
-            <li>Keep your information private &amp; secure</li>
+            <li>Shop multiple carriers at once</li>
+            <li>Keep your info private &amp; secure</li>
             <li>Potential savings in just a few minutes</li>
           </ul>
           <div class="trust-row">
-            <div class="trust-badge">Secure form</div>
-            <div class="trust-badge">No consumer fees</div>
-            <div class="trust-badge">SSL encrypted</div>
+            <div class="trust-badge">Secure</div>
+            <div class="trust-badge">No fees</div>
+            <div class="trust-badge">SSL</div>
           </div>
         </div>
 
-        <div class="card hero-form-card" role="region" aria-label="Quote request form">
+        <div class="card hero-form-card" role="region" aria-label="Quote form">
           <form id="leadForm" novalidate>
             <!-- Step 1 -->
             <div class="form-step active" data-step="1">
               <h2>Start your free quote</h2>
-              <span class="label">What do you need today?</span>
+              <span class="label">What do you need?</span>
               <div class="pill-group" role="radiogroup" aria-label="Coverage type">
                 <input class="visually-hidden" type="radio" name="coverage_type" id="cov_auto" value="auto" checked>
                 <label for="cov_auto" class="pill">Auto</label>
+
                 <input class="visually-hidden" type="radio" name="coverage_type" id="cov_home" value="home">
                 <label for="cov_home" class="pill">Home</label>
+
                 <input class="visually-hidden" type="radio" name="coverage_type" id="cov_bundle" value="bundle">
                 <label for="cov_bundle" class="pill">Auto + Home</label>
               </div>
+
               <label for="zip" class="label">ZIP Code</label>
               <input id="zip" name="zip" inputmode="numeric" maxlength="5" placeholder="e.g., 30301" required>
+
               <button type="button" class="btn primary" id="toStep2">Continue</button>
               <p class="micro">It’s free and takes about 60–90 seconds.</p>
             </div>
@@ -453,14 +398,18 @@
             <!-- Step 2 -->
             <div class="form-step" data-step="2">
               <h2>Tell us a bit more</h2>
+
               <div id="autoFields" class="conditional-block">
                 <label for="vehicle_year" class="label">Vehicle Year</label>
                 <input id="vehicle_year" name="vehicle_year" placeholder="e.g., 2021">
+
                 <label for="vehicle_make" class="label">Vehicle Make</label>
                 <input id="vehicle_make" name="vehicle_make" placeholder="e.g., Toyota">
+
                 <label for="vehicle_model" class="label">Vehicle Model</label>
                 <input id="vehicle_model" name="vehicle_model" placeholder="e.g., Camry">
               </div>
+
               <div id="homeFields" class="conditional-block">
                 <label for="home_type" class="label">Home Type</label>
                 <select id="home_type" name="home_type">
@@ -471,6 +420,7 @@
                   <option>Mobile</option>
                   <option>Other</option>
                 </select>
+
                 <label for="home_ownership" class="label">Ownership</label>
                 <select id="home_ownership" name="home_ownership">
                   <option value="">Select</option>
@@ -478,6 +428,7 @@
                   <option>Rent</option>
                 </select>
               </div>
+
               <div class="step-controls">
                 <button type="button" class="btn ghost" id="backTo1">Back</button>
                 <button type="button" class="btn primary" id="toStep3">Continue</button>
@@ -487,12 +438,16 @@
             <!-- Step 3 -->
             <div class="form-step" data-step="3">
               <h2>Where should partners send your quotes?</h2>
+
               <label for="first_name" class="label">First Name</label>
               <input id="first_name" name="first_name" autocomplete="given-name" required>
+
               <label for="last_name" class="label">Last Name</label>
               <input id="last_name" name="last_name" autocomplete="family-name" required>
+
               <label for="email" class="label">Email</label>
               <input id="email" name="email" type="email" autocomplete="email" required>
+
               <label for="phone" class="label">Mobile Phone</label>
               <input id="phone" name="phone" type="tel" inputmode="tel" placeholder="(555) 123-4567" required>
 
@@ -524,28 +479,27 @@
             </div>
           </form>
           <p class="tiny">
-            SmartCoverage and SearchnRate are not insurers or agencies. We connect consumers with licensed providers and agents.
-            Availability, eligibility and rates vary by state and provider.
+            We are not an insurer or agency. We connect consumers with licensed providers.
+            Availability and rates vary by state.
           </p>
         </div>
       </div>
     </section>
 
-    <!-- Trusted brands / logos -->
+    <!-- Trusted logos row -->
     <section class="trusted">
       <div class="trusted-inner">
         <p class="trusted-title">Compare quotes from leading insurance providers</p>
 
         <div class="logo-row">
-          <img src="/assets/logos/statefarm.png" alt="Example insurance brand: State Farm" loading="lazy">
-          <img src="/assets/logos/geico.jpeg" alt="Example insurance brand: GEICO" loading="lazy">
-          <img src="/assets/logos/progressive.jpeg" alt="Example insurance brand: Progressive" loading="lazy">
-          <img src="/assets/logos/allstate.jpeg" alt="Example insurance brand: Allstate" loading="lazy">
+          <img src="/assets/logos/statefarm.png" alt="State Farm" loading="lazy">
+          <img src="/assets/logos/geico.jpeg" alt="GEICO" loading="lazy">
+          <img src="/assets/logos/progressive.jpeg" alt="Progressive" loading="lazy">
+          <img src="/assets/logos/allstate.jpeg" alt="Allstate" loading="lazy">
         </div>
 
         <p class="trusted-disclaimer">
-          Logos are trademarks of their respective owners and are shown for illustrative purposes only.
-          No endorsement, sponsorship, or affiliation is implied, and availability may vary by state.
+          Logos are trademarks of their respective owners. No endorsement or affiliation is implied.
         </p>
       </div>
     </section>
@@ -553,48 +507,84 @@
     <section class="why">
       <div class="container grid2">
         <div>
-          <h2>Why use SmartCoverage from SearchnRate?</h2>
+          <h2>Why SmartCoverage?</h2>
           <ul class="value-bullets">
-            <li>Compare multiple auto and home insurance providers with a single form</li>
-            <li>No consumer fees — we’re compensated by partners, not by you</li>
-            <li>Private &amp; secure lead handling with clear opt-out options</li>
-            <li>Bundle auto + home to explore extra savings opportunities</li>
+            <li>Compare multiple providers with one simple form</li>
+            <li>No fees — we’re compensated by partners</li>
+            <li>Private &amp; secure — we respect your data</li>
+            <li>Bundle auto + home to explore extra savings</li>
           </ul>
         </div>
         <div class="card" style="padding:16px">
           <h3>How it works</h3>
           <ol class="steps">
-            <li>Answer a few quick questions about your auto and/or home.</li>
-            <li>We securely share your request with matching providers and licensed agents.</li>
-            <li>Compare offers and choose the coverage and price that works best for you.</li>
+            <li>Answer a few questions (about a minute)</li>
+            <li>We share with matching providers</li>
+            <li>Compare offers and choose what’s best</li>
           </ol>
         </div>
       </div>
     </section>
 
+    <!-- NEW SEO CONTENT SECTION -->
+    <section class="seo-content">
+      <div class="container">
+        <h2>What is auto insurance lead generation?</h2>
+        <p>
+          Auto insurance lead generation is the process of connecting drivers who are actively
+          shopping for coverage with licensed insurance providers and agents. A lead generation
+          website like SmartCoverage collects basic information (ZIP code, vehicle details and
+          contact information) and securely shares it with selected partners who can offer quotes.
+        </p>
+
+        <p>
+          Instead of visiting multiple insurer websites one by one, consumers fill out a single,
+          secure form. With their consent, we may share their details with more than one provider
+          so they can compare prices, coverage options and discounts side-by-side.
+        </p>
+
+        <h3>How SmartCoverage fits into the process</h3>
+        <ul>
+          <li><strong>We are not an insurance company or agency.</strong> We operate a matching and marketing platform.</li>
+          <li><strong>We charge consumers nothing.</strong> Our service is free to use; partners may compensate us when a lead matches or converts.</li>
+          <li><strong>We focus on consent and compliance.</strong> Our form includes clear TCPA consent and an option to opt out of sale or sharing under applicable law.</li>
+        </ul>
+
+        <h3>Benefits for consumers</h3>
+        <ul>
+          <li>Compare offers from multiple providers without filling out several forms.</li>
+          <li>See potential savings on auto or bundled auto + home coverage.</li>
+          <li>Decide if and when to move forward with any quote – there is no obligation to buy.</li>
+        </ul>
+
+        <h3>Benefits for insurance partners and lead buyers</h3>
+        <ul>
+          <li>Access intent-driven shoppers who requested information about auto and home insurance.</li>
+          <li>Receive leads with embedded consent language and a clear timestamp.</li>
+          <li>Filter by vertical (<em>auto</em>, <em>home</em>, or <em>bundled</em>) and other attributes to match your criteria.</li>
+        </ul>
+
+        <h3>Common questions about insurance lead generators</h3>
+        <p><strong>Is lead generation legal?</strong> Yes – when done with proper consent, transparent disclosures and compliance with laws such as the TCPA and state insurance regulations.</p>
+        <p><strong>Do you “sell” or “share” my information?</strong> Under some privacy laws, sending your information to partners to provide quotes may be considered a “sale” or “sharing.” That’s why we provide a Do Not Sell/Share option and opt-out form for eligible residents.</p>
+      </div>
+    </section>
+
+    <!-- EXISTING FAQ SECTION -->
     <section class="faq">
       <div class="container">
         <h2>Frequently Asked Questions</h2>
         <details>
           <summary>Will I receive calls or texts?</summary>
-          <div>
-            Yes, if you consent, partners and licensed agents may contact you by phone, SMS (including auto-dialers), and email about insurance offers.
-            You can opt out of texts at any time by replying STOP and manage email preferences using unsubscribe links.
-          </div>
+          <div>Yes, if you consent, partners may contact you by phone, SMS, and email. You can opt out anytime.</div>
         </details>
         <details>
           <summary>Do I have to buy anything?</summary>
-          <div>
-            No. Getting matched, reviewing quotes, and using SmartCoverage is free. There is no obligation to purchase a policy.
-            Any decision to buy is between you and the provider or agent.
-          </div>
+          <div>No. Getting matched and receiving quotes is free and there’s no obligation.</div>
         </details>
         <details>
           <summary>How do you protect my data?</summary>
-          <div>
-            We use HTTPS encryption and other safeguards to protect form submissions in transit and limit sharing to vetted providers and licensed insurance partners.
-            You can also submit a “Do Not Sell/Share” request using our <a href="/do-not-sell.html">Do Not Sell/Share page</a>.
-          </div>
+          <div>We encrypt form submissions in transit and limit sharing to vetted providers. Read our Privacy Policy for details.</div>
         </details>
       </div>
     </section>
@@ -612,6 +602,7 @@
       <nav class="footer-links">
         <a href="#" id="openPrivacyFooter">Privacy</a>
         <a href="#" id="openTermsFooter">Terms</a>
+        <!-- Fallback to real CCPA page if JS fails -->
         <a href="/do-not-sell.html" id="openCCPAFooter">Do Not Sell/Share</a>
       </nav>
     </div>
@@ -637,14 +628,10 @@
       const today = new Date();
       const todayEl = $('#today');
       if (todayEl) {
-        todayEl.textContent = today.toLocaleDateString(undefined,{
-          year:'numeric',
-          month:'long',
-          day:'numeric'
-        });
+        todayEl.textContent = today.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
       }
 
-      // Step handling
+      // Steps
       function showStep(n){
         $$('.form-step').forEach(s=>s.classList.remove('active'));
         const target = document.querySelector('[data-step="'+n+'"]');
@@ -662,9 +649,9 @@
 
       if (toStep2) {
         toStep2.addEventListener('click',()=>{
-          errorEl.textContent='';
+          if (errorEl) errorEl.textContent='';
           if(!isValidZip(zip.value)){
-            errorEl.textContent='Please enter a valid 5-digit ZIP code.';
+            if (errorEl) errorEl.textContent='Please enter a valid 5-digit ZIP code.';
             zip.focus();
             return;
           }
@@ -678,7 +665,7 @@
 
       if (toStep3) {
         toStep3.addEventListener('click',()=>{
-          errorEl.textContent='';
+          if (errorEl) errorEl.textContent='';
           showStep(3);
         });
       }
@@ -693,131 +680,149 @@
         const auto = $('#autoFields');
         const home = $('#homeFields');
         if (auto && home) {
-          if(ct==='auto'){
-            auto.style.display='block';
-            home.style.display='none';
-          } else if(ct==='home'){
-            auto.style.display='none';
-            home.style.display='block';
-          } else {
-            auto.style.display='block';
-            home.style.display='block';
-          }
+          if(ct==='auto'){auto.style.display='block';home.style.display='none';}
+          else if(ct==='home'){auto.style.display='none';home.style.display='block';}
+          else {auto.style.display='block';home.style.display='block';}
         }
       }
-
-      $$('.pill-group input[type="radio"]').forEach(r=>{
-        r.addEventListener('change',toggleConditional);
-      });
+      $$('.pill-group input[type="radio"]').forEach(r=>r.addEventListener('change',toggleConditional));
       toggleConditional();
 
-      // Phone formatting
+      // Input helpers
       const phoneInput = $('#phone');
       if (phoneInput) {
         phoneInput.addEventListener('input', (e)=>{
-          const just=(e.target.value||'').replace(/[^0-9]/g,'');
-          const parts=[];
-          if(just.length>0) parts.push('('+just.substring(0,3));
-          if(just.length>=4) parts.push(') '+just.substring(3,6));
-          if(just.length>=7) parts.push('-'+just.substring(6,10));
-          e.target.value = parts.join('');
+          const just=(e.target.value||'').replace(/[^0-9]/g,'').slice(0,10);
+          let out='';
+          if(just.length>0){out+='('+just.substring(0,3);}
+          if(just.length>=4){out+=') '+just.substring(3,6);}
+          if(just.length>=7){out+='-'+just.substring(6,10);}
+          e.target.value = out;
         });
       }
 
       // UTM capture
       const params = new URLSearchParams(location.search);
-      ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid'].forEach(k=>{
-        const el = document.getElementById(k);
-        if(el && params.has(k)) el.value = params.get(k);
-      });
+      ['utm_source','utm_medium','utm_campaign','utm_term','utm_content','gclid']
+        .forEach(k=>{
+          const el = document.getElementById(k);
+          if(el && params.has(k)) el.value=params.get(k);
+        });
 
-      // Validation helpers
+      // Form submit
+      const form = document.getElementById('leadForm');
       function validEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v||'');}
       function normalizePhone(v){return (v||'').replace(/[^0-9]/g,'').slice(0,10);}
-
-      const form = document.getElementById('leadForm');
-      const LEAD_ENDPOINT = '/.netlify/functions/lead';
 
       if (form) {
         form.addEventListener('submit', async (e)=>{
           e.preventDefault();
-          errorEl.textContent='';
-          errorEl.classList.remove('success');
-          errorEl.classList.add('error');
+          if (errorEl) {
+            errorEl.textContent='';
+            errorEl.classList.remove('success');
+            errorEl.classList.add('error');
+          }
 
-          const emailVal = ($('#email')?.value || '').trim();
-          const phoneVal = normalizePhone($('#phone')?.value || '');
-          const consentChecked = $('#consent')?.checked;
-          const hp = $('#hp_field')?.value || '';
+          const email = $('#email').value.trim();
+          const phone = normalizePhone($('#phone').value);
+          const consent = $('#consent').checked;
+          const hp = $('#hp_field').value;
 
           if(hp){
-            // Honeypot: treat as bot
-            errorEl.textContent='Submission failed. Please try again.';
+            if (errorEl) errorEl.textContent='Submission failed. Please try again.';
+            return; // bot caught
+          }
+          if(!validEmail(email)){
+            if (errorEl) errorEl.textContent='Please enter a valid email address.';
+            $('#email').focus();
             return;
           }
-          if(!validEmail(emailVal)){
-            errorEl.textContent='Please enter a valid email address.';
-            $('#email')?.focus();
+          if(phone.length<10){
+            if (errorEl) errorEl.textContent='Please enter a valid 10-digit mobile number.';
+            $('#phone').focus();
             return;
           }
-          if(phoneVal.length < 10){
-            errorEl.textContent='Please enter a valid 10-digit mobile number.';
-            $('#phone')?.focus();
-            return;
-          }
-          if(!consentChecked){
-            errorEl.textContent='You must agree and provide consent to continue.';
-            $('#consent')?.focus();
+          if(!consent){
+            if (errorEl) errorEl.textContent='You must agree and provide consent to continue.';
+            $('#consent').focus();
             return;
           }
 
-          const coverageType = getCoverageType();
-          const tcpaText = 'By clicking “Get Free Quotes”, I agree to the Terms and Privacy Policy and consent to be contacted by up to 8 insurance partners and/or their agents via phone, SMS (including auto-dialers) and email for marketing purposes. Consent is not a condition of purchase. Msg/data rates may apply. I also agree to receive recurring texts; reply STOP to opt out.';
+          // Capture consent text for TCPA logging
+          const consentLabel = document.querySelector('.consent label');
+          const tcpaText = consentLabel ? consentLabel.textContent.trim() : '';
 
-          const leadPayload = {
-            email: emailVal,
-            phone: phoneVal,
-            first_name: ($('#first_name')?.value || '').trim(),
-            last_name: ($('#last_name')?.value || '').trim(),
-            zip: ($('#zip')?.value || '').trim(),
-            lead_type: coverageType === 'bundle' ? 'both' : coverageType,
+          const payload = {
+            timestamp: new Date().toISOString(),
+            coverage_type: getCoverageType(),
+            lead_type: getCoverageType(),
+            zip: $('#zip').value,
+            vehicle_year: $('#vehicle_year')?.value || '',
+            vehicle_make: $('#vehicle_make')?.value || '',
+            vehicle_model: $('#vehicle_model')?.value || '',
+            home_type: $('#home_type')?.value || '',
+            home_ownership: $('#home_ownership')?.value || '',
+            first_name: $('#first_name').value.trim(),
+            last_name: $('#last_name').value.trim(),
+            email,
+            phone,
+            utm_source: $('#utm_source').value,
+            utm_medium: $('#utm_medium').value,
+            utm_campaign: $('#utm_campaign').value,
+            utm_term: $('#utm_term').value,
+            utm_content: $('#utm_content').value,
+            gclid: $('#gclid').value,
             source_url: window.location.href,
-            tcpa_text: tcpaText
+            tcpa_text: tcpaText,
+            user_agent: navigator.userAgent
           };
 
           try{
-            const res = await fetch(LEAD_ENDPOINT,{
-              method:'POST',
-              headers:{'Content-Type':'application/json'},
-              body: JSON.stringify(leadPayload)
+            const res = await fetch("/.netlify/functions/lead", {
+              method:"POST",
+              headers:{"Content-Type":"application/json"},
+              body:JSON.stringify(payload)
             });
 
-            const data = await res.json().catch(()=>null);
-
-            if(!res.ok || !data || !data.ok){
-              throw new Error(data && (data.error || data.detail) || 'Lead API error');
+            let data = {};
+            try {
+              data = await res.json();
+            } catch(_) {
+              data = {};
             }
 
-            // Success
+            if(!res.ok || !data.ok){
+              console.error("Lead error:", data);
+              if (errorEl) errorEl.textContent =
+                data && data.error
+                  ? "We couldn't submit your request right now: " + data.error
+                  : "We couldn't submit your request right now. Please try again in a moment.";
+              return;
+            }
+
+            // Success: reset form and show message based on accepted/blocked status
             form.reset();
             showStep(1);
-            errorEl.classList.remove('error');
-            errorEl.classList.add('success');
-
-            if(data.status === 'blocked'){
-              errorEl.textContent = 'Your information is on our Do Not Sell/Share list, so this request has been recorded but will not be sold or shared with partners.';
-            } else {
-              errorEl.textContent = 'Thanks! Your request has been received. Providers and licensed agents may contact you with quotes.';
+            if (errorEl) {
+              errorEl.classList.remove('error');
+              errorEl.classList.add('success');
+              if (data.status === 'blocked') {
+                errorEl.textContent = 'Your request was received, but this contact is on our do-not-sell or opt-out list.';
+              } else {
+                errorEl.textContent = 'Thanks! Your request has been received. Providers may contact you shortly.';
+              }
+              setTimeout(()=>{
+                errorEl.textContent='';
+                errorEl.classList.remove('success');
+                errorEl.classList.add('error');
+              }, 5000);
             }
 
-            setTimeout(()=>{
-              errorEl.textContent='';
-              errorEl.classList.remove('success');
-            }, 7000);
-
           }catch(err){
-            console.error('LEAD_SUBMIT_ERROR', err);
-            errorEl.textContent = "We couldn't submit your request right now. Please refresh the page or try again in a few minutes.";
+            console.error(err);
+            if (errorEl) {
+              errorEl.textContent = "We couldn't submit your request right now. Please try again in a moment.";
+            }
           }
         });
       }
@@ -826,72 +831,71 @@
       const modal = document.getElementById('modal');
       const modalBody = document.getElementById('modalBody');
       const modalTitle = document.getElementById('modalTitle');
+
       function openModal(title, html){
-        modalTitle.textContent = title;
-        modalBody.innerHTML = html;
+        if (!modal) return;
+        modalTitle.textContent=title;
+        modalBody.innerHTML=html;
         modal.showModal();
       }
-      function closeModal(){ modal.close(); }
-      document.getElementById('closeModal')?.addEventListener('click', closeModal);
+      function closeModal(){
+        if (modal && modal.open) modal.close();
+      }
+      const closeBtn = document.getElementById('closeModal');
+      if (closeBtn) closeBtn.addEventListener('click', closeModal);
 
       const privacyHTML = `
         <p><strong>Effective:</strong> ${today.toLocaleDateString()}</p>
-        <p>SmartCoverage ("we","us","our") operates a lead generation service that matches consumers with licensed insurance providers and agents ("partners"). This Privacy Policy explains what information we collect, how we use it, and your choices.</p>
+        <p>SmartCoverage ("we","us","our") operates a lead generation service that matches consumers with licensed insurance providers and agents ("partners"). This Privacy explains what information we collect, how we use it, and your choices.</p>
         <h4>Information We Collect</h4>
         <ul>
-          <li>Contact data: name, email, phone number, ZIP code.</li>
-          <li>Insurance interests and details you provide (vehicle and/or home).</li>
-          <li>Technical data: IP address, device/browser, referral URL, and marketing parameters such as UTM tags or click IDs.</li>
+          <li>Contact data: name, email, phone, ZIP</li>
+          <li>Insurance interests and details you provide (vehicle/home)</li>
+          <li>Technical data: IP, device/browser, referral URL, marketing parameters</li>
         </ul>
         <h4>How We Use Information</h4>
         <ul>
-          <li>To match you with one or more insurance providers or licensed agents.</li>
-          <li>To transmit your inquiry so partners can provide insurance quotes.</li>
-          <li>To improve our services, prevent fraud, and comply with law.</li>
-          <li>For marketing consistent with your consent and applicable law.</li>
+          <li>To match you with one or more providers or licensed agents</li>
+          <li>To transmit your inquiry so partners can provide quotes</li>
+          <li>To improve our service, prevent fraud, and comply with law</li>
+          <li>For marketing consistent with your consent</li>
         </ul>
         <h4>Sharing</h4>
-        <p>We may share your information with multiple partners so you can compare quotes. With your consent, partners may contact you by phone, SMS (including auto-dialers), and email. Consent is not required as a condition to purchase. Message and data rates may apply.</p>
+        <p>We may share your information with multiple partners so you can compare options. Partners may contact you by phone, SMS (including auto-dialers), and email. Consent is not required to make a purchase. Msg &amp; data rates may apply.</p>
         <h4>Security</h4>
-        <p>We use administrative, technical, and physical safeguards to protect your information. However, no system is 100% secure.</p>
+        <p>We use administrative, technical, and physical safeguards to protect your information. No system is 100% secure.</p>
         <h4>Your Choices</h4>
         <ul>
-          <li>Opt out of marketing emails via the “unsubscribe” links in those messages.</li>
-          <li>Opt out of SMS by replying STOP to any message you receive from a partner.</li>
-          <li>Submit a Do Not Sell/Share request using our <a href="/do-not-sell.html">Do Not Sell/Share page</a> where applicable.</li>
+          <li>Opt out of emails via “unsubscribe.”</li>
+          <li>Opt out of texts by replying STOP.</li>
+          <li>Contact us to access, correct, or delete information where applicable.</li>
         </ul>
         <h4 id="ccpa">CCPA — Do Not Sell/Share</h4>
-        <p>If you are a California resident, you may have the right to request that we do not sell or share your personal information as defined under California law. To exercise this right, please submit a request through our <a href="/do-not-sell.html">Do Not Sell/Share page</a>.</p>
+        <p>We may “sell” or “share” personal information as defined by CA law when we disclose your information to partners for quotes. To opt out, use our Do Not Sell/Share link or form, or email <a href="mailto:privacy@example.com">privacy@example.com</a> with subject “CCPA Opt-Out”.</p>
       `;
 
       const termsHTML = `
-        <p>These Terms of Service govern your use of the SmartCoverage and SearchnRate website and services. By accessing or using this site, you agree to these Terms.</p>
+        <p>These Terms govern your use of SmartCoverage’s website and services. By using the site, you agree to them.</p>
         <h4>Service</h4>
-        <p>We are not an insurance company, agency, or broker. We provide a matching service that connects consumers with licensed insurance providers and agents who can offer auto and home insurance quotes.</p>
+        <p>We are not an insurance company, agency, or broker. We provide a matching service connecting consumers with licensed providers or agents who can offer insurance quotes.</p>
         <h4>Consent to Contact</h4>
-        <p>By submitting your information, you agree that we and our partners may contact you by phone, SMS (including auto-dialers), and email about insurance offers. Consent is not required as a condition of purchase. Message and data rates may apply.</p>
+        <p>By submitting your information, you agree that we and partners may contact you by phone, SMS (including auto-dialers), and email for marketing purposes. Consent is not required as a condition of purchase.</p>
         <h4>No Guarantees</h4>
-        <p>We do not guarantee that you will receive a quote, that you will be offered coverage, or that you will achieve any particular level of savings. Final terms, conditions, and decisions are provided by the insurers and licensed agents.</p>
+        <p>We do not guarantee availability of quotes, eligibility, coverage, or savings. Final terms are provided by partners.</p>
         <h4>Compliance</h4>
-        <p>You agree to use this site in compliance with all applicable laws, including but not limited to the Telephone Consumer Protection Act (TCPA), CAN-SPAM, and state insurance regulations.</p>
+        <p>You agree to comply with all applicable laws, including TCPA, CAN-SPAM, and state insurance regulations.</p>
       `;
 
       const ccpaHTML = `
-        <p>If you are a California resident, you may submit a request to opt out of the sale or sharing of your personal information as defined under California law.</p>
-        <p>To exercise this right, please visit our dedicated <a href="/do-not-sell.html">Do Not Sell/Share My Personal Information</a> page and submit the online form. We will use the information you provide solely to process and record your request.</p>
+        <p>You can opt out of the sale or sharing of your personal information as defined by CA law. Use our Do Not Sell/Share form or email <a href="mailto:privacy@example.com">privacy@example.com</a> with the subject “CCPA Opt-Out.”</p>
       `;
 
       function bindModal(linkSel, title, html){
         $$(linkSel).forEach(a=>a.addEventListener('click', (e)=>{
-          // If the link has a real href (like /do-not-sell.html), let those navigate normally.
-          if (a.getAttribute('href') && a.getAttribute('href').startsWith('/')) {
-            return;
-          }
           e.preventDefault();
           openModal(title, html);
         }));
       }
-
       bindModal('#openPrivacy,#openPrivacyInline,#openPrivacyFooter','Privacy Policy', privacyHTML);
       bindModal('#openTerms,#openTermsInline,#openTermsFooter','Terms of Service', termsHTML);
       bindModal('#openCCPA,#openCCPAFooter','Do Not Sell/Share (CCPA)', ccpaHTML);
