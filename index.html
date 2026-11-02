@@ -297,6 +297,8 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
 @media(max-width:760px){.site-header .inner{min-height:72px}.brand .text strong{font-size:22px}.top-links a{font-size:12px;margin-left:12px}.hero{padding:32px 0}.hero-grid{grid-template-columns:1fr;gap:22px}.hero-copy{grid-column:1;grid-row:1}.hero-form-card{grid-column:1;grid-row:2;max-width:none}.hero-photo{grid-column:1;grid-row:3;min-height:310px;max-width:480px;width:100%;justify-self:center}.hero-photo img{border-radius:20px;object-position:center 40%}.hero h1{font-size:42px}.sub{font-size:16px}.eyebrow{margin-bottom:15px}.footer-grid{gap:20px}.footer-links{display:flex;gap:15px;flex-wrap:wrap}.footer-links a{margin:0}.about-content .grid2{display:block}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}}
 
+    #formError:not(:empty){font-size:16px;line-height:1.6;font-weight:600;padding:16px;border:1px solid currentColor;border-radius:10px;background:#fff;margin-top:18px;overflow-wrap:anywhere}
+    #formError.success{color:#12683d;background:#edf9f1}
   </style>
 
   <!-- Structured data: WebSite -->
@@ -803,11 +805,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
               } else {
                 errorEl.textContent = 'Thanks! Your request has been received. Providers may contact you shortly.';
               }
-              setTimeout(()=>{
-                errorEl.textContent='';
-                errorEl.classList.remove('success');
-                errorEl.classList.add('error');
-              }, 5000);
+              // Keep the result visible until the next submission or page refresh.
             }
 
           }catch(err){
