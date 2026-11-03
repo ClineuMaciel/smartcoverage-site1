@@ -523,7 +523,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
             <p id="formError" class="error" role="alert" aria-live="polite"></p>
           </form>
           <div id="buyerCall" aria-live="polite"><button type="button" class="btn ghost" disabled>Call Now</button><p class="micro">Enter your ZIP code to check phone availability.</p></div>
-          <p class="tiny">
+          <p class="tiny" id="platformDisclaimer">
             We are not an insurer or agency. We connect consumers with licensed providers.
             Availability and rates vary by state.
           </p>
@@ -598,7 +598,9 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
       function updateCalls(){
         const box=document.getElementById('buyerCall');box.replaceChildren();
         const office=currentPolicy?.office;
-        if(office&&Date.now()<Date.parse(office.valid_until)&&currentPolicy.zip===document.getElementById('zip').value){const a=document.createElement('a');a.className='btn ghost';a.href='tel:'+office.phone;a.addEventListener('click',e=>{if(Date.now()>=Date.parse(office.valid_until)){e.preventDefault();document.getElementById('zip').dispatchEvent(new Event('input'));}});a.textContent='Call Now: (901) 266-5507';box.append(a);const p=document.createElement('p');p.className='micro';p.textContent='Premier Seguranza • TN/MS • Mon–Fri, 9 AM–4 PM Central.';const languages=document.createElement('strong');languages.textContent='We Speak Spanish and Portuguese';languages.style.display='block';p.append(languages);box.append(p);return;}
+        const officeVisible=Boolean(office&&Date.now()<Date.parse(office.valid_until)&&currentPolicy.zip===document.getElementById('zip').value);
+        document.getElementById('platformDisclaimer').hidden=officeVisible;
+        if(officeVisible){const a=document.createElement('a');a.className='btn ghost';a.href='tel:'+office.phone;a.addEventListener('click',e=>{if(Date.now()>=Date.parse(office.valid_until)){e.preventDefault();document.getElementById('zip').dispatchEvent(new Event('input'));}});a.textContent='Call Now: (901) 266-5507';box.append(a);const p=document.createElement('p');p.className='micro';p.textContent='Premier Seguranza • TN/MS • Mon–Fri, 9 AM–4 PM Central.';const languages=document.createElement('strong');languages.textContent='We Speak Spanish and Portuguese';languages.style.display='block';p.append(languages);box.append(p);return;}
         const list=(currentPolicy?.buyers||[]).filter(b=>b.phone&&Date.now()<Date.parse(b.valid_until)&&(getCoverageType()==='bundle'||b.id===getCoverageType()));
         if(!list.length){const waiting=document.createElement('button');waiting.type='button';waiting.className='btn ghost';waiting.textContent='Call Now';waiting.disabled=true;waiting.setAttribute('aria-describedby','callAvailability');box.append(waiting);const p=document.createElement('p');p.id='callAvailability';p.className='micro';p.textContent=currentPolicy?.routing_destination==='buyer_queue'?'Phone connections are not available yet for this location or time. You can submit a quote request instead.':'Enter your ZIP code to check phone availability.';box.append(p);return;}
         for(const b of list){const a=document.createElement('a');a.className='btn ghost';a.href='tel:'+b.phone;a.addEventListener('click',e=>{if(Date.now()>=Date.parse(b.valid_until)){e.preventDefault();document.getElementById('zip').dispatchEvent(new Event('input'));}});a.textContent='Call Now — '+b.name;box.append(a);}
