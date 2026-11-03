@@ -46,3 +46,10 @@ References reviewed November 3, 2026:
 ## Premier Seguranza office override
 
 At the owner's direction, a successful ZIP-state lookup for TN or MS shows **Call our office: (901) 266-5507** (`tel:+19012665507`). Other states do not get this office link. ZIP-state lookup uses https://api.zippopotam.us/us/{zip} with a four-second timeout. Missing, ambiguous or failed lookup leaves the office route unavailable; ZIP is not a verified residence. LeadEvidence stores the lookup state and office route. The office call is user initiated and does not grant future marketing consent. This route does not automatically send contact details to the office or certify caller eligibility. No live call was placed in testing.
+
+
+## Office schedule and nationwide buyer priority
+
+SearchNRate is primarily a nationwide lead-generation service. TN/MS receives the supporting office route Monday–Friday from 09:00 inclusive until 16:00 exclusive in America/Chicago, automatically adjusting for daylight saving. Weekends and after-hours TN/MS requests, and all other resolved states at any time, are marked buyer_queue. Failed state lookups are state_lookup_pending. Opt-outs and tests override routing and remain withheld. LeadEvidence gains routing_destination, with an additive header migration preserving prior rows. These queue labels do not imply a buyer received the lead. Buyer delivery remains held pending onboarding and evidence verification. The office path records the intended destination; no staff notification or automatic phone transfer is installed.
+
+No holiday calendar has been specified. Weekday holidays currently follow the normal weekday schedule. The browser refreshes contact configuration once per minute and invalidates expired office links.

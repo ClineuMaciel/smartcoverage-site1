@@ -522,7 +522,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
             </div>
             <p id="formError" class="error" role="alert" aria-live="polite"></p>
           </form>
-          <div id="buyerCall" aria-live="polite"><p class="micro">Direct calling will be available when an approved buyer is connected.</p></div>
+          <div id="buyerCall" aria-live="polite"><button type="button" class="btn ghost" disabled>Call Now</button><p class="micro">Enter your ZIP code to check phone availability.</p></div>
           <p class="tiny">
             We are not an insurer or agency. We connect consumers with licensed providers.
             Availability and rates vary by state.
@@ -542,7 +542,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
 <h3>Car insurance quotes</h3><p>Shopping for auto insurance? Start with your vehicle year, make and model. When comparing car insurance quotes, review the same coverage limits and deductibles. Ask the provider about liability coverage, comprehensive and collision coverage, and available discounts.</p>
 <h3>Homeowners insurance quotes</h3><p>Choose Home to request information about home insurance. Discuss dwelling coverage, personal property, liability, deductibles and exclusions with the quoting provider. Coverage depends on the property, policy and insurer.</p>
 <h3>Auto and home insurance bundles</h3><p>Choose Auto + Home to explore coverage for your car and home together. Ask whether bundling policies offers a multi-policy discount, and compare total premiums and coverage before deciding.</p>
-<h3>Insurance help in Tennessee and Mississippi</h3><p>TN and MS visitors can call Premier Seguranza at <a href="tel:+19012665507">(901) 266-5507</a>. Enter your ZIP code above for the location-based office button. <strong>We Speak Spanish and Portuguese</strong>.</p>
+<h3>Insurance help in Tennessee and Mississippi</h3><p>TN and MS visitors can call Premier Seguranza Monday–Friday, 9 AM–4 PM Central, at <a href="tel:+19012665507">(901) 266-5507</a>. Enter your ZIP code above for the location-based office button. <strong>We Speak Spanish and Portuguese</strong>.</p>
 <h3>About insurance referrals and your information</h3><p>Your form records your coverage choice, contact details, source information and the consent disclosure shown when you submit. Approved buyer delivery requires additional checks. We do not charge consumers to submit; approved partners may compensate us for referrals. Read the Privacy Policy and your current consent disclosure for details.</p>
 <h3>For insurance lead buyers</h3><p>SearchNRate collects auto and home insurance quote requests. Publisher onboarding, accepted states, required data, consent evidence, duplicate rules and delivery testing must be agreed before buyer delivery is enabled. No lead exclusivity, conversion rate or compliance certification is promised.</p>
 </div></section><section class="faq"><div class="container"><h2>Car and home insurance questions</h2>
@@ -598,9 +598,9 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
       function updateCalls(){
         const box=document.getElementById('buyerCall');box.replaceChildren();
         const office=currentPolicy?.office;
-        if(office&&currentPolicy.zip===document.getElementById('zip').value){const a=document.createElement('a');a.className='btn ghost';a.href='tel:'+office.phone;a.textContent='Call our office: (901) 266-5507';box.append(a);const p=document.createElement('p');p.className='micro';p.textContent='Premier Seguranza • Tennessee and Mississippi.';const languages=document.createElement('strong');languages.textContent='We Speak Spanish and Portuguese';languages.style.display='block';p.append(languages);box.append(p);return;}
+        if(office&&Date.now()<Date.parse(office.valid_until)&&currentPolicy.zip===document.getElementById('zip').value){const a=document.createElement('a');a.className='btn ghost';a.href='tel:'+office.phone;a.addEventListener('click',e=>{if(Date.now()>=Date.parse(office.valid_until)){e.preventDefault();document.getElementById('zip').dispatchEvent(new Event('input'));}});a.textContent='Call Now: (901) 266-5507';box.append(a);const p=document.createElement('p');p.className='micro';p.textContent='Premier Seguranza • TN/MS • Mon–Fri, 9 AM–4 PM Central.';const languages=document.createElement('strong');languages.textContent='We Speak Spanish and Portuguese';languages.style.display='block';p.append(languages);box.append(p);return;}
         const list=(currentPolicy?.buyers||[]).filter(b=>b.phone&&(getCoverageType()==='bundle'||b.id===getCoverageType()));
-        if(!list.length){const p=document.createElement('p');p.className='micro';p.textContent='Direct calling is not available for this coverage yet.';box.append(p);return;}
+        if(!list.length){const waiting=document.createElement('button');waiting.type='button';waiting.className='btn ghost';waiting.textContent='Call Now';waiting.disabled=true;waiting.setAttribute('aria-describedby','callAvailability');box.append(waiting);const p=document.createElement('p');p.id='callAvailability';p.className='micro';p.textContent=currentPolicy?.routing_destination==='buyer_queue'?'Phone connections are not available yet for this location or time. You can submit a quote request instead.':'Enter your ZIP code to check phone availability.';box.append(p);return;}
         for(const b of list){const a=document.createElement('a');a.className='btn ghost';a.href='tel:'+b.phone;a.textContent='Call Now — '+b.name;box.append(a);}
         const p=document.createElement('p');p.className='micro';p.textContent='You will call the named buyer directly. Calling does not submit this form or authorize future marketing. The buyer will explain any call recording.';box.append(p);
       }
@@ -631,6 +631,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
         if(!/^\d{5}$/.test(zip.value))return;
         try{const r=await fetch('/.netlify/functions/lead-config?zip='+encodeURIComponent(zip.value),{cache:'no-store'});if(!r.ok)return;const next=await r.json();if(seq===zipLookupSequence){currentPolicy=next;consentNode.textContent=next.text;updateCalls();}}catch{}
       });
+      setInterval(()=>{if(/^\d{5}$/.test(zip.value))zip.dispatchEvent(new Event('input'));},60000);
       const errorEl = $('#formError');
       const toStep2 = $('#toStep2');
       const toStep3 = $('#toStep3');
@@ -903,6 +904,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
   </script>
 </body>
 </html>
+
 
 
 
