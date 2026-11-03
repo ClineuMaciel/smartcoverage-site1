@@ -379,6 +379,8 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
         <figure class="hero-photo"><img src="/assets/insurance-phone.webp" width="1024" height="1024" alt="Smiling woman exploring insurance options on her phone" fetchpriority="high"><figcaption>More confidence. Less guesswork.</figcaption></figure>
         <div class="card hero-form-card" role="region" aria-label="Quote form">
           <form id="leadForm" novalidate>
+<input type="hidden" name="xxTrustedFormCertUrl" id="trustedform_url">
+<input type="hidden" name="universal_leadid" id="jornaya_lead_id">
             <!-- Step 1 -->
             <div class="form-step active" data-step="1">
               <h2>What would you like to cover?</h2>
@@ -461,7 +463,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
               <div class="consent" style="margin:8px 0 0">
                 <input type="checkbox" id="consent" name="consent" required>
                 <label for="consent">
-                  By clicking “Get Free Quotes”, I agree to the <a href="#" id="openTermsInline">Terms</a> and <a href="#" id="openPrivacyInline">Privacy Policy</a> and consent to be contacted by up to 8 insurance partners and/or their agents via phone, SMS (including auto-dialers) and email for marketing purposes. Consent is not a condition of purchase. Msg/data rates may apply. I also agree to receive recurring texts; reply STOP to opt out.
+                  Loading the current consent disclosure…
                 </label>
               </div>
 
@@ -487,6 +489,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
             </div>
             <p id="formError" class="error" role="alert" aria-live="polite"></p>
           </form>
+          <div id="buyerCall" aria-live="polite"><p class="micro">Direct calling will be available when an approved buyer is connected.</p></div>
           <p class="tiny">
             We are not an insurer or agency. We connect consumers with licensed providers.
             Availability and rates vary by state.
@@ -616,6 +619,24 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
       const $ = sel => document.querySelector(sel);
       const $$ = sel => Array.from(document.querySelectorAll(sel));
 
+      let submitting=false, currentPolicy=null;
+      const submissionId=()=>crypto.randomUUID();
+      let requestId=submissionId(), formStartedAt=new Date().toISOString();
+      const finalButton=document.querySelector('#leadForm button[type="submit"]');
+      finalButton.disabled=true;
+      const consentNode=document.querySelector('.consent label');
+      function updateCalls(){
+        const box=document.getElementById('buyerCall');box.replaceChildren();
+        const office=currentPolicy?.office;
+        if(office&&currentPolicy.zip===document.getElementById('zip').value){const a=document.createElement('a');a.className='btn ghost';a.href='tel:'+office.phone;a.textContent='Call our office: (901) 266-5507';box.append(a);const p=document.createElement('p');p.className='micro';p.textContent='Premier Seguranza • Tennessee and Mississippi. Your call goes directly to our office.';box.append(p);return;}
+        const list=(currentPolicy?.buyers||[]).filter(b=>b.phone&&(getCoverageType()==='bundle'||b.id===getCoverageType()));
+        if(!list.length){const p=document.createElement('p');p.className='micro';p.textContent='Direct calling is not available for this coverage yet.';box.append(p);return;}
+        for(const b of list){const a=document.createElement('a');a.className='btn ghost';a.href='tel:'+b.phone;a.textContent='Call Now — '+b.name;box.append(a);}
+        const p=document.createElement('p');p.className='micro';p.textContent='You will call the named buyer directly. Calling does not submit this form or authorize future marketing. The buyer will explain any call recording.';box.append(p);
+      }
+      fetch('/.netlify/functions/lead-config',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error();return r.json();}).then(p=>{
+        currentPolicy=p;consentNode.textContent=p.text;finalButton.disabled=false;updateCalls();
+      }).catch(()=>{consentNode.textContent='The disclosure could not load. Refresh this page before submitting.';});
       // Date
       const today = new Date();
       const todayEl = $('#today');
@@ -633,6 +654,13 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
 
       $('#backTo2').addEventListener('click',()=>showStep(2));
       const zip = $('#zip');
+      let zipLookupSequence=0;
+      zip.addEventListener('input',async()=>{
+        const seq=++zipLookupSequence;
+        if(currentPolicy){currentPolicy.office=null;currentPolicy.zip='';updateCalls();}
+        if(!/^\d{5}$/.test(zip.value))return;
+        try{const r=await fetch('/.netlify/functions/lead-config?zip='+encodeURIComponent(zip.value),{cache:'no-store'});if(!r.ok)return;const next=await r.json();if(seq===zipLookupSequence){currentPolicy=next;consentNode.textContent=next.text;updateCalls();}}catch{}
+      });
       const errorEl = $('#formError');
       const toStep2 = $('#toStep2');
       const toStep3 = $('#toStep3');
@@ -678,7 +706,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
           else {auto.style.display='block';home.style.display='block';}
         }
       }
-      $$('.pill-group input[type="radio"]').forEach(r=>r.addEventListener('change',toggleConditional));
+      $$('.pill-group input[type="radio"]').forEach(r=>r.addEventListener('change',()=>{toggleConditional();updateCalls();}));
       toggleConditional();
 
       // Input helpers
@@ -710,6 +738,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
       if (form) {
         form.addEventListener('submit', async (e)=>{
           e.preventDefault();
+          if(submitting||!currentPolicy)return;
           if (errorEl) {
             errorEl.textContent='';
             errorEl.classList.remove('success');
@@ -747,6 +776,13 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
 
           const payload = {
             timestamp: new Date().toISOString(),
+            submission_id:requestId, form_started_at:formStartedAt,
+            client_consent_at:new Date().toISOString(),consent:true,
+            consent_version:currentPolicy.version,consent_hash:currentPolicy.hash,
+            hp_field:hp,referrer:document.referrer,
+            trustedform_url:document.querySelector('[name="xxTrustedFormCertUrl"]')?.value||'',
+            jornaya_lead_id:document.querySelector('[name="universal_leadid"]')?.value||'',
+            fbclid:params.get('fbclid')||'',ttclid:params.get('ttclid')||'',
             coverage_type: getCoverageType(),
             lead_type: getCoverageType(),
             zip: $('#zip').value,
@@ -770,6 +806,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
             user_agent: navigator.userAgent
           };
 
+          submitting=true;finalButton.disabled=true;
           try{
             const res = await fetch("/.netlify/functions/lead", {
               method:"POST",
@@ -795,6 +832,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
 
             // Success: reset form and show message based on accepted/blocked status
             form.reset();
+            requestId=submissionId();formStartedAt=new Date().toISOString();
             toggleConditional();
             showStep(1);
             if (errorEl) {
@@ -805,6 +843,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
               } else {
                 errorEl.textContent = 'Thanks! Your request has been received. Providers may contact you shortly.';
               }
+              errorEl.textContent=data.message||errorEl.textContent;
               // Keep the result visible until the next submission or page refresh.
             }
 
@@ -813,7 +852,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
             if (errorEl) {
               errorEl.textContent = "We couldn't submit your request right now. Please try again in a moment.";
             }
-          }
+          }finally{submitting=false;finalButton.disabled=false;}
         });
       }
 
@@ -835,7 +874,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
       if (closeBtn) closeBtn.addEventListener('click', closeModal);
 
       const privacyHTML = `
-        <p><strong>Effective:</strong> ${today.toLocaleDateString()}</p>
+        <p><strong>Effective:</strong> 2026-11-03</p>
         <p>SearchNRate ("we","us","our") operates a lead generation service that matches consumers with licensed insurance providers and agents ("partners"). This Privacy explains what information we collect, how we use it, and your choices.</p>
         <h4>Information We Collect</h4>
         <ul>
@@ -861,7 +900,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
           <li>Contact us to access, correct, or delete information where applicable.</li>
         </ul>
         <h4 id="ccpa">CCPA — Do Not Sell/Share</h4>
-        <p>We may “sell” or “share” personal information as defined by CA law when we disclose your information to partners for quotes. To opt out, use our Do Not Sell/Share link or form, or email <a href="mailto:privacy@example.com">privacy@example.com</a> with subject “CCPA Opt-Out”.</p>
+        <p>We may “sell” or “share” personal information as defined by CA law when we disclose your information to partners for quotes. To opt out, use our Do Not Sell/Share link or form, using <a href="/do-not-sell.html">our opt-out form</a>.</p>
       `;
 
       const termsHTML = `
@@ -877,7 +916,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
       `;
 
       const ccpaHTML = `
-        <p>You can opt out of the sale or sharing of your personal information as defined by CA law. Use our Do Not Sell/Share form or email <a href="mailto:privacy@example.com">privacy@example.com</a> with the subject “CCPA Opt-Out.”</p>
+        <p>You can opt out of the sale or sharing of your personal information as defined by CA law. Use our Do Not Sell/Share form using <a href="/do-not-sell.html">our opt-out form</a>.</p>
       `;
 
       function bindModal(linkSel, title, html){
@@ -888,10 +927,11 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
       }
       bindModal('#openPrivacy,#openPrivacyInline,#openPrivacyFooter','Privacy Policy', privacyHTML);
       bindModal('#openTerms,#openTermsInline,#openTermsFooter','Terms of Service', termsHTML);
-      bindModal('#openConsentRules','Consent rules', '<p>' + document.querySelector('.consent label').textContent + '</p>');
+      bindModal('#openConsentRules','Consent rules', '<p>Read the disclosure beside the checkbox. Any named buyer and the exact disclosure are saved with your request. Calling a buyer directly does not grant marketing consent.</p>');
 
     })();
   </script>
 </body>
 </html>
+
 
