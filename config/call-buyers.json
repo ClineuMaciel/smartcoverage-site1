@@ -1,0 +1,48 @@
+{
+  "offers": [
+    {
+      "campaignId": "auto-primary",
+      "line": "auto",
+      "buyerName": "",
+      "trackingNumber": "",
+      "enabled": false,
+      "approved": false,
+      "testCallPassed": false,
+      "acceptedStates": [],
+      "timeZone": "America/Chicago",
+      "days": [],
+      "hours": [],
+      "acceptedTraffic": [],
+      "languages": [],
+      "minimumConnectedSeconds": null,
+      "duplicateWindowDays": null,
+      "qualificationRules": [],
+      "paymentTerms": "",
+      "reportingUrl": "",
+      "buyerManagesCaps": false,
+      "termsReviewed": false
+    },
+    {
+      "campaignId": "home-primary",
+      "line": "home",
+      "buyerName": "",
+      "trackingNumber": "",
+      "enabled": false,
+      "approved": false,
+      "testCallPassed": false,
+      "acceptedStates": [],
+      "timeZone": "America/Chicago",
+      "days": [],
+      "hours": [],
+      "acceptedTraffic": [],
+      "languages": [],
+      "minimumConnectedSeconds": null,
+      "duplicateWindowDays": null,
+      "qualificationRules": [],
+      "paymentTerms": "",
+      "reportingUrl": "",
+      "buyerManagesCaps": false,
+      "termsReviewed": false
+    }
+  ]
+}
