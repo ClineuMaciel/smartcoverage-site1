@@ -13,7 +13,7 @@ exports.handler=async event=>{
  if(Buffer.byteLength(event.body||'')>10000)return reply(413,{ok:false,error:'Request too large'});
  let b;try{b=JSON.parse(event.body||'{}');}catch{return reply(400,{ok:false,error:'Invalid JSON'});}
  if(!b||typeof b!=='object'||Array.isArray(b)||b.hp_field)return reply(400,{ok:false,error:'Unable to accept this request'});
- const name=string(b.name,120),phone=normPhone(b.phone),zip=string(b.zip,5),needs=string(b.needs,1000),submission=string(b.submission_id,80);
+ const name=string(b.name,120),phone=normPhone(b.phone),zip=string(b.zip,10),needs=string(b.needs,1000),submission=string(b.submission_id,80);
  if(!name||phone.length!==10||!/^\d{5}$/.test(zip)||!needs||!['auto','home','bundle'].includes(b.coverage_type)||!/^[a-zA-Z0-9-]{16,80}$/.test(submission))return reply(400,{ok:false,error:'Enter your name, ten-digit phone number, ZIP code, and insurance needs'});
  if(b.consent!==true||b.consent_version!==VERSION)return reply(400,{ok:false,error:'Please agree to the callback permission shown on this form'});
  try{
