@@ -430,7 +430,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
               </div>
 
               <label for="zip" class="label">ZIP Code</label>
-              <input id="zip" name="zip" inputmode="numeric" maxlength="5" placeholder="e.g., 30301" required>
+              <input id="zip" name="zip" autocomplete="postal-code" inputmode="numeric" maxlength="5" placeholder="e.g., 30301" required>
 
               <button type="button" class="btn primary" id="toStep2">Get started →</button>
               <p class="micro">Free to request. No obligation to buy.</p>
@@ -522,7 +522,21 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
             </div>
             <p id="formError" class="error" role="alert" aria-live="polite"></p>
           </form>
-          <div id="buyerCall" aria-live="polite"><button type="button" class="btn ghost" disabled>Call Now</button><p class="micro">Enter your ZIP code to check phone availability.</p></div>
+          <div id="buyerCall" aria-live="polite"><a class="btn ghost" href="#callbackPanel">Call Now / Request a callback</a><p class="micro">Enter your ZIP code to check phone availability.</p></div>
+          <details id="callbackPanel" style="margin-top:18px;scroll-margin-top:20px">
+            <summary style="cursor:pointer;font-weight:650;padding:12px 0">Request a callback</summary>
+            <p class="micro">Can’t connect right now? Please fill out this form with your insurance needs. We’ll review your request and respond as soon as possible. Callback availability depends on your location.</p>
+            <form id="callbackForm" novalidate>
+              <label class="label" for="callback_name">Your name</label><input id="callback_name" autocomplete="name" maxlength="120" required>
+              <label class="label" for="callback_phone">Phone number for your callback</label><input id="callback_phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" required>
+              <label class="label" for="callback_zip">ZIP code</label><input id="callback_zip" inputmode="numeric" autocomplete="postal-code" maxlength="5" required>
+              <label class="label" for="callback_needs">What insurance do you need?</label><textarea id="callback_needs" rows="3" maxlength="1000" style="width:100%;font:inherit;padding:12px;border:1px solid #d8dfec;border-radius:10px" placeholder="Auto, home, or both? Tell us how we can help. Avoid sensitive personal information." required></textarea>
+              <div class="consent" style="margin:14px 0"><input type="checkbox" id="callback_consent" required><label for="callback_consent">I ask SearchNRate, or Premier Seguranza for Tennessee/Mississippi requests, to call the number I provide about this insurance request. This does not authorize marketing calls or texts from other companies. I agree to the <a href="#" id="callbackPrivacy">Privacy Policy</a>.</label></div>
+              <div style="position:absolute;left:-200vw;height:0;overflow:hidden" aria-hidden="true"><input id="callback_hp" tabindex="-1" autocomplete="off"></div>
+              <button class="btn primary block" type="submit" id="callbackSubmit">Request my callback</button>
+              <p id="callbackResult" class="micro" role="status" aria-live="polite" style="font-size:15px;line-height:1.6"></p>
+            </form>
+          </details>
           <p class="tiny" id="platformDisclaimer">
             We are not an insurer or agency. We connect consumers with licensed providers.
             Availability and rates vary by state.
@@ -590,7 +604,24 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
       const $$ = sel => Array.from(document.querySelectorAll(sel));
 
       let submitting=false, currentPolicy=null;
-      const submissionId=()=>crypto.randomUUID();
+      const submissionId=()=>{
+        if(globalThis.crypto?.randomUUID)return globalThis.crypto.randomUUID();
+        if(globalThis.crypto?.getRandomValues){const bytes=new Uint8Array(16);globalThis.crypto.getRandomValues(bytes);return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');}
+        return 'request-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)+'-'+Math.random().toString(36).slice(2);
+      };
+      let callIntentAt='', callAttemptAt='', callbackRequestId=submissionId();
+      function openCallback(){
+        callIntentAt=new Date().toISOString();
+        const panel=document.getElementById('callbackPanel');panel.open=true;
+        document.getElementById('callback_zip').value=document.getElementById('zip').value.trim();
+        panel.scrollIntoView({behavior:'smooth',block:'start'});
+        document.getElementById('callback_phone').focus();
+      }
+      function callClick(e,validUntil){
+        callIntentAt=new Date().toISOString();
+        if(Date.now()>=Date.parse(validUntil)){e.preventDefault();refreshPolicy();openCallback();return;}
+        callAttemptAt=new Date().toISOString();
+      }
       let requestId=submissionId(), formStartedAt=new Date().toISOString();
       const finalButton=document.querySelector('#leadForm button[type="submit"]');
       finalButton.disabled=true;
@@ -598,17 +629,14 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
       function updateCalls(){
         const box=document.getElementById('buyerCall');box.replaceChildren();
         const office=currentPolicy?.office;
-        const officeVisible=Boolean(office&&Date.now()<Date.parse(office.valid_until)&&currentPolicy.zip===document.getElementById('zip').value);
+        const officeVisible=Boolean(office&&Date.now()<Date.parse(office.valid_until)&&currentPolicy.zip===document.getElementById('zip').value.trim());
         document.getElementById('platformDisclaimer').hidden=officeVisible;
-        if(officeVisible){const a=document.createElement('a');a.className='btn ghost';a.href='tel:'+office.phone;a.addEventListener('click',e=>{if(Date.now()>=Date.parse(office.valid_until)){e.preventDefault();document.getElementById('zip').dispatchEvent(new Event('input'));}});a.textContent='Call Now: (901) 266-5507';box.append(a);const p=document.createElement('p');p.className='micro';p.textContent='Premier Seguranza • TN/MS • Mon–Fri, 9 AM–4 PM Central.';const languages=document.createElement('strong');languages.textContent='We Speak Spanish and Portuguese';languages.style.display='block';p.append(languages);box.append(p);return;}
+        if(officeVisible){const a=document.createElement('a');a.className='btn ghost';a.href='tel:'+office.phone;a.addEventListener('click',e=>callClick(e,office.valid_until));a.textContent='Call Now: (901) 266-5507';box.append(a);const p=document.createElement('p');p.className='micro';p.textContent='Premier Seguranza • TN/MS • Mon–Fri, 9 AM–4 PM Central.';const languages=document.createElement('strong');languages.textContent='We Speak Spanish and Portuguese';languages.style.display='block';p.append(languages);box.append(p);return;}
         const list=(currentPolicy?.buyers||[]).filter(b=>b.phone&&Date.now()<Date.parse(b.valid_until)&&(getCoverageType()==='bundle'||b.id===getCoverageType()));
-        if(!list.length){const waiting=document.createElement('button');waiting.type='button';waiting.className='btn ghost';waiting.textContent='Call Now';waiting.disabled=true;waiting.setAttribute('aria-describedby','callAvailability');box.append(waiting);const p=document.createElement('p');p.id='callAvailability';p.className='micro';p.textContent=currentPolicy?.routing_destination==='buyer_queue'?'Phone connections are not available yet for this location or time. You can submit a quote request instead.':'Enter your ZIP code to check phone availability.';box.append(p);return;}
-        for(const b of list){const a=document.createElement('a');a.className='btn ghost';a.href='tel:'+b.phone;a.addEventListener('click',e=>{if(Date.now()>=Date.parse(b.valid_until)){e.preventDefault();document.getElementById('zip').dispatchEvent(new Event('input'));}});a.textContent='Call Now — '+b.name;box.append(a);}
+        if(!list.length){const waiting=document.createElement('button');waiting.type='button';waiting.className='btn ghost';waiting.textContent='Call Now';waiting.addEventListener('click',openCallback);waiting.setAttribute('aria-describedby','callAvailability');box.append(waiting);const p=document.createElement('p');p.id='callAvailability';p.className='micro';p.textContent=currentPolicy?.routing_destination==='buyer_queue'?'A live phone connection is unavailable for this location or time. Request a callback below, or submit your quote request.':'Enter your ZIP code to check phone availability, or request a callback below.';box.append(p);return;}
+        for(const b of list){const a=document.createElement('a');a.className='btn ghost';a.href='tel:'+b.phone;a.addEventListener('click',e=>callClick(e,b.valid_until));a.textContent='Call Now — '+b.name;box.append(a);}
         const p=document.createElement('p');p.className='micro';p.textContent='You will call the named buyer directly. Calling does not submit this form or authorize future marketing. The buyer will explain any call recording.';box.append(p);
       }
-      fetch('/.netlify/functions/lead-config',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error();return r.json();}).then(p=>{
-        currentPolicy=p;consentNode.textContent=p.text;finalButton.disabled=false;updateCalls();
-      }).catch(()=>{consentNode.textContent='The disclosure could not load. Refresh this page before submitting.';});
       // Date
       const today = new Date();
       const todayEl = $('#today');
@@ -626,14 +654,27 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
 
       $('#backTo2').addEventListener('click',()=>showStep(2));
       const zip = $('#zip');
-      let zipLookupSequence=0;
-      zip.addEventListener('input',async()=>{
+      let zipLookupSequence=0, zipDebounce;
+      async function refreshPolicy(){
         const seq=++zipLookupSequence;
-        if(currentPolicy){currentPolicy.office=null;currentPolicy.zip='';updateCalls();}
-        if(!/^\d{5}$/.test(zip.value))return;
-        try{const r=await fetch('/.netlify/functions/lead-config?zip='+encodeURIComponent(zip.value),{cache:'no-store'});if(!r.ok)return;const next=await r.json();if(seq===zipLookupSequence){currentPolicy=next;consentNode.textContent=next.text;updateCalls();}}catch{}
-      });
-      setInterval(()=>{if(/^\d{5}$/.test(zip.value))zip.dispatchEvent(new Event('input'));},60000);
+        const wanted=zip.value.trim();
+        if(currentPolicy){currentPolicy.office=null;currentPolicy.buyers=[];currentPolicy.zip='';updateCalls();}
+        finalButton.disabled=true;
+        const query=/^\d{5}$/.test(wanted)?'?zip='+encodeURIComponent(wanted):'';
+        try{
+          const r=await fetch('/.netlify/functions/lead-config'+query,{cache:'no-store'});
+          if(!r.ok)throw Error('Disclosure unavailable');
+          const next=await r.json();
+          if(seq!==zipLookupSequence||wanted!==zip.value.trim())return;
+          currentPolicy=next;consentNode.textContent=next.text;finalButton.disabled=false;updateCalls();
+        }catch{if(seq===zipLookupSequence){consentNode.textContent='The disclosure could not load. Please try again before submitting.';}}
+      }
+      zip.addEventListener('input',()=>{clearTimeout(zipDebounce);if(currentPolicy){currentPolicy.office=null;currentPolicy.buyers=[];currentPolicy.zip='';updateCalls();}zipDebounce=setTimeout(refreshPolicy,180);});
+      ['change','blur'].forEach(event=>zip.addEventListener(event,refreshPolicy));
+      window.addEventListener('pageshow',refreshPolicy);
+      document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshPolicy();});
+      setInterval(refreshPolicy,30000);
+      refreshPolicy();
       const errorEl = $('#formError');
       const toStep2 = $('#toStep2');
       const toStep3 = $('#toStep3');
@@ -649,6 +690,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
             zip.focus();
             return;
           }
+          refreshPolicy();
           showStep(2);
         });
       }
@@ -807,6 +849,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
             form.reset();
             requestId=submissionId();formStartedAt=new Date().toISOString();
             toggleConditional();
+            refreshPolicy();
             showStep(1);
             if (errorEl) {
               errorEl.classList.remove('error');
@@ -828,6 +871,22 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
           }finally{submitting=false;finalButton.disabled=false;}
         });
       }
+
+      let callbackSubmitting=false;
+      document.getElementById('callbackPanel').addEventListener('toggle',()=>{if(document.getElementById('callbackPanel').open&&!callIntentAt)callIntentAt=new Date().toISOString();});
+      document.getElementById('callbackForm').addEventListener('submit',async e=>{
+        e.preventDefault();if(callbackSubmitting)return;
+        const result=document.getElementById('callbackResult'),button=document.getElementById('callbackSubmit');
+        const rawPhone=document.getElementById('callback_phone').value.replace(/\D/g,'').replace(/^1(?=\d{10}$)/,'');
+        const name=document.getElementById('callback_name').value.trim(),postal=document.getElementById('callback_zip').value.trim(),needs=document.getElementById('callback_needs').value.trim();
+        if(!name||!/^\d{10}$/.test(rawPhone)||!/^\d{5}$/.test(postal)||!needs||!document.getElementById('callback_consent').checked){result.textContent='Please provide your name, ten-digit phone number, ZIP code, insurance needs, and callback permission.';return;}
+        callbackSubmitting=true;button.disabled=true;result.textContent='Saving your callback request…';
+        try{
+          const r=await fetch('/.netlify/functions/callback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({submission_id:callbackRequestId,name,phone:rawPhone,zip:postal,needs,coverage_type:getCoverageType(),consent:true,consent_version:'2026-11-04.callback.1',intent_started_at_client:callIntentAt,call_attempt_at_client:callAttemptAt,requested_at_client:new Date().toISOString(),source_url:location.href,hp_field:document.getElementById('callback_hp').value})});
+          const data=await r.json();if(!r.ok||!data.ok)throw Error(data.error||'Unable to save right now. Please try again.');
+          result.textContent=data.message;callbackRequestId=submissionId();callIntentAt='';callAttemptAt='';document.getElementById('callbackForm').reset();
+        }catch(error){result.textContent=error.message||'Unable to save right now. Please try again.';}finally{callbackSubmitting=false;button.disabled=false;}
+      });
 
       // Modal content
       const modal = document.getElementById('modal');
@@ -898,7 +957,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
           openModal(title, html);
         }));
       }
-      bindModal('#openPrivacy,#openPrivacyInline,#openPrivacyFooter','Privacy Policy', privacyHTML);
+      bindModal('#openPrivacy,#openPrivacyInline,#openPrivacyFooter,#callbackPrivacy','Privacy Policy', privacyHTML);
       bindModal('#openTerms,#openTermsInline,#openTermsFooter','Terms of Service', termsHTML);
       bindModal('#openConsentRules','Consent rules', '<p>Read the disclosure beside the checkbox. Any named buyer and the exact disclosure are saved with your request. Calling a buyer directly does not grant marketing consent.</p>');
 
@@ -906,8 +965,3 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
   </script>
 </body>
 </html>
-
-
-
-
-
