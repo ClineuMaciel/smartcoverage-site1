@@ -7,3 +7,4 @@ test('approval, test, qualification, source and cap controls fail closed',()=>{f
 test('closed, weekend and invalid timezone routes remain hidden',()=>{for(const [date,patch] of [['2026-11-03T23:00:00Z',{}],['2026-11-07T16:00:00Z',{}],['2026-11-03T16:00:00Z',{timeZone:'invalid'}]])assert.equal(callBuyers('CA',new Date(date),env({...offer(),...patch})).length,0);});
 test('malformed config fails closed',()=>assert.deepEqual(callBuyers('CA',at,{CALL_BUYERS_JSON:'invalid'}),[]));
 test('public response excludes qualification, payment and reporting details',()=>{const o=callBuyers('CA',at,env(offer()))[0];assert.equal(o.paymentTerms,undefined);assert.equal(o.minimumConnectedSeconds,undefined);assert.equal(o.campaign_id,'test');});
+test('TN/MS never display buyer tracking numbers even with approved offers',()=>{for(const state of ['TN','MS'])assert.deepEqual(callBuyers(state,at,env({...offer(),acceptedStates:['TN','MS']})),[]);});

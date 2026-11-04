@@ -8,5 +8,5 @@ function officeOpen(at=new Date()){
  return ['Mon','Tue','Wed','Thu','Fri'].includes(parts.weekday)&&Number(parts.hour)>=9&&Number(parts.hour)<16;
 }
 function office(state,at=new Date()){return ['TN','MS'].includes(state)&&officeOpen(at)?{id:'office',name:'Premier Seguranza',phone:'+19012665507',state,hours:'Monday–Friday, 9 AM–4 PM Central',valid_until:new Date(Math.floor(at.getTime()/60000)*60000+60000).toISOString()}:null;}
-function destination(state,at=new Date()){return office(state,at)?'office':state?'buyer_queue':'state_lookup_pending';}
+function destination(state,at=new Date()){return ['TN','MS'].includes(state)?'office':state?'buyer_queue':'state_lookup_pending';}
 module.exports={zipState,office,officeOpen,destination};
