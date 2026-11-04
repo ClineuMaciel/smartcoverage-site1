@@ -4,7 +4,7 @@ const schema=require('../netlify/functions/lib/sales-schema.json');
 function record(patch={}){const r=Array(35).fill('');Object.assign(r,{0:'lead-1',1:'2026-11-03T22:00:00Z',3:'customer@validmail.net',4:'9015550123',5:'Alice',6:'Shopper',7:'38122',8:'auto',9:'accepted',16:'Observed consent',17:true,31:'no_approved_buyer',32:'TN',34:'buyer_queue'},patch);return r;}
 function fake({evidence=[record()],rows=[],optouts=[],badHeader=false,windows=[[1],[7],[30]],appendFail=false}={}){
  const calls=[],state={rows:rows.map(r=>[...r])};
- const sheets={spreadsheets:{get:async()=>({data:{sheets:Object.keys(schema).map((title,sheetId)=>({properties:{title,sheetId,gridProperties:{rowCount:10001,columnCount:45}}}))}}),batchUpdate:async x=>{calls.push(['format',x]);return {};},values:{
+ const sheets={spreadsheets:{get:async()=>({data:{sheets:Object.keys(schema).map((title,sheetId)=>({properties:{title,sheetId,gridProperties:{rowCount:10001,columnCount:45}}}))}}),batchUpdate:async x=>{calls.push(['format',x]);if(x.requestBody.requests.some(r=>r.sortRange))state.rows.sort((a,b)=>Number(b[44])-Number(a[44])||String(a[0]).localeCompare(String(b[0])));return {};},values:{
  get:async({range})=>{let values=[];if(range==="'Parameters'!B3:B5")values=windows;else if(range==='LeadEvidence!A2:AI')values=evidence;else if(range==="'Sales List'!A2:AS")values=state.rows;else if(range==='OptOuts!A2:C')values=optouts;else {const name=range.match(/^'([^']+)'!/)[1];values=[badHeader&&name==='Sales List'?['wrong']:schema[name]];}return {data:{values:structuredClone(values)}};},
  append:async x=>{if(appendFail)throw Error('storage failure');calls.push(['append',x]);state.rows.push(...x.requestBody.values);return {};},
  batchUpdate:async x=>{calls.push(['values',x]);return {};},update:async x=>{calls.push(['update',x]);return {};}
@@ -19,3 +19,13 @@ test('header mismatch, invalid age windows and duplicate IDs fail closed',async(
 test('storage failure is surfaced, never reported as a successful projection',async()=>{const h=fake({appendFail:true});await assert.rejects(syncRegister(h.sheets,'sheet'),/storage failure/);});
 test('archival requires both flags and suppression precedes delivery review',()=>{const f=formulas(2);assert(f.F.includes('AND(U2="Yes",V2="Yes")'));assert(f.G.startsWith('=IF(AQ2<>""'));for(const c of ['P','Q','R','S','T'])assert(f.G.includes(c+'2="Yes"'));assert(f.G.includes('Z2>0,AA2>0'));assert(!Object.values(f).some(v=>v.includes('NOW()')));});
 test('callback requests retain needs and are marked callback-only instead of buyer-sale consent',()=>{const row=makeRow(record({31:'callback_only',25:JSON.stringify({insurance_needs:'Home quote',call_attempt_at_client:'2026-11-03T20:00:00Z'})}),2);assert.equal(row.length,45);assert(row[27].includes('Not authorized for buyer sale'));assert(row[43].includes('Home quote'));assert(formulas(2).G.includes('CALLBACK ONLY — no buyer sale'));});
+
+test('newest-first sorting keeps IDs, buyer edits and contact data together',async()=>{
+ const old=makeRow(record({0:'older',1:'2026-01-01T00:00:00Z',3:'older@validmail.net'}),2);old[14]='Existing buyer';old[15]='Yes';
+ const recent=record({0:'newer',1:'2026-11-04T10:00:00Z',3:'newer@validmail.net'});
+ const h=fake({rows:[old],evidence:[recent]});await syncRegister(h.sheets,'sheet');
+ assert.equal(h.state.rows[0][0],'newer');assert.equal(h.state.rows[0][11],'newer@validmail.net');assert.equal(h.state.rows[1][0],'older');assert.equal(h.state.rows[1][14],'Existing buyer');assert.equal(h.state.rows[1][15],'Yes');
+ const request=h.calls.filter(c=>c[0]==='format').flatMap(c=>c[1].requestBody.requests).find(r=>r.sortRange).sortRange;
+ assert.equal(request.range.startRowIndex,1);assert.equal(request.range.endColumnIndex,45);assert.equal(request.sortSpecs[0].dimensionIndex,44);assert.equal(request.sortSpecs[0].sortOrder,'DESCENDING');
+ const writes=h.calls.filter(c=>c[0]==='values').flatMap(c=>c[1].requestBody.data);assert(writes.some(w=>w.range==="'Sales List'!B2"&&w.values[0][0].includes('AS2')));
+});

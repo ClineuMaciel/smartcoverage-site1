@@ -39,9 +39,10 @@ async function ensureLayout(sheets,id){
  const formats=[];for(const [title,items] of Object.entries(specs)){const sheetId=meta.find(s=>s.properties.title===title).properties.sheetId;for(const [startColumnIndex,endColumnIndex,type,pattern,startRowIndex=1,endRowIndex=10001] of items)formats.push({repeatCell:{range:{sheetId,startColumnIndex,endColumnIndex,startRowIndex,endRowIndex},cell:{userEnteredFormat:{numberFormat:{type,pattern}}},fields:'userEnteredFormat.numberFormat'}});}
  await sheets.spreadsheets.batchUpdate({spreadsheetId:id,requestBody:{requests:formats}});
  const params=await getValues(sheets,id,"'Parameters'!B3:B5");const [a,b,c]=params.map(r=>Number(r[0]));if(!(a>0&&b>a&&c>b))throw Error('Invalid sales age windows');
+ return {salesSheetId:meta.find(s=>s.properties.title==='Sales List').properties.sheetId};
 }
 async function syncRegister(sheets,id,now=new Date()){
- await ensureLayout(sheets,id);
+ const layout=await ensureLayout(sheets,id);
  const [evidence,existing,optouts]=await Promise.all([getValues(sheets,id,'LeadEvidence!A2:AI'),getValues(sheets,id,"'Sales List'!A2:AS"),getValues(sheets,id,'OptOuts!A2:C')]);
  if(existing.length>10000)throw Error('Sales register capacity exceeded');
  const ids=new Set();for(const r of existing){if(r[0]&&ids.has(r[0]))throw Error('Duplicate Sales List ID requires review');if(r[0])ids.add(r[0]);}
@@ -49,7 +50,14 @@ async function syncRegister(sheets,id,now=new Date()){
  if(existing.length+additions.length>10000)throw Error('Sales register capacity exceeded');
  // Scheduled worker is the sole automatic Sales List writer. No visitor-controlled formulas.
  if(additions.length)await sheets.spreadsheets.values.append({spreadsheetId:id,range:"'Sales List'!A:AS",valueInputOption:'RAW',insertDataOption:'INSERT_ROWS',requestBody:{values:additions}});
- const rows=existing.concat(additions),updates=[];
+ let rows=existing.concat(additions);
+ // Move complete records together, never individual ID/date/contact columns.
+ // Re-read sorted rows before rebuilding row-relative formulas and suppression flags.
+ if(rows.length>1){
+  await sheets.spreadsheets.batchUpdate({spreadsheetId:id,requestBody:{requests:[{sortRange:{range:{sheetId:layout.salesSheetId,startRowIndex:1,endRowIndex:rows.length+1,startColumnIndex:0,endColumnIndex:45},sortSpecs:[{dimensionIndex:44,sortOrder:'DESCENDING'},{dimensionIndex:0,sortOrder:'ASCENDING'}]}}]}});
+  rows=await getValues(sheets,id,"'Sales List'!A2:AS");
+ }
+ const updates=[];
  updates.push({range:"'Parameters'!B2",values:[[serial(now.toISOString())]]});
  updates.push({range:"'Parameters'!A6:C7",values:[['Lead connection','Live evidence projection','Refreshes every five minutes after successful production deployment.'],['Timestamps','UTC','New LeadEvidence records use server receipt time. Imported historical timestamps are unchanged.']]});
  for(let i=0;i<rows.length;i++){const row=rows[i],r=i+2;if(!row[0])continue;for(const [c,f] of Object.entries(formulas(r)))updates.push({range:`'Sales List'!${c}${r}`,values:[[f]]});
