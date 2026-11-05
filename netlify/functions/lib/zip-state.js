@@ -7,6 +7,6 @@ function officeOpen(at=new Date()){
  const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(at).map(p=>[p.type,p.value]));
  return ['Mon','Tue','Wed','Thu','Fri'].includes(parts.weekday)&&Number(parts.hour)>=9&&Number(parts.hour)<16;
 }
-function office(state,at=new Date()){return ['TN','MS'].includes(state)&&officeOpen(at)?{id:'office',name:'Premier Seguranza',phone:'+19012665507',state,hours:'Monday–Friday, 9 AM–4 PM Central',valid_until:new Date(Math.floor(at.getTime()/60000)*60000+60000).toISOString()}:null;}
+function office(state,at=new Date()){return ['TN','MS'].includes(state)&&officeOpen(at)?{id:'office',name:'Premier Seguranza',phone:'+12147744462',state,hours:'Monday–Friday, 9 AM–4 PM Central',valid_until:new Date(Math.floor(at.getTime()/60000)*60000+60000).toISOString()}:null;}
 function destination(state,at=new Date()){return ['TN','MS'].includes(state)?'office':state?'buyer_queue':'state_lookup_pending';}
 module.exports={zipState,office,officeOpen,destination};

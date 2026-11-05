@@ -12,7 +12,7 @@ test('testing email held from buyer delivery',async()=>{const h=harness();assert
 test('repeat request returns existing id without extra rows',async()=>{const b=valid();const h=harness({prior:[['existing',new Date().toISOString(),b.submission_id,b.email,b.phone,'','','',b.coverage_type]]});const r=JSON.parse((await h.handler(event(b))).body);assert.equal(r.status,'duplicate');assert.equal(r.lead_id,'existing');assert.equal(h.writes.length,0);});
 
 const {zipState,office}=require('../netlify/functions/lib/zip-state');
-test('office route restricted to verified Tennessee and Mississippi',()=>{assert.equal(office('TN',new Date('2026-11-03T15:00:00Z')).phone,'+19012665507');assert.equal(office('MS',new Date('2026-11-03T15:00:00Z')).phone,'+19012665507');assert.equal(office('AL'),null);assert.equal(office(''),null);});
+test('office route restricted to verified Tennessee and Mississippi',()=>{assert.equal(office('TN',new Date('2026-11-03T15:00:00Z')).phone,'+12147744462');assert.equal(office('MS',new Date('2026-11-03T15:00:00Z')).phone,'+12147744462');assert.equal(office('AL'),null);assert.equal(office(''),null);});
 test('ZIP lookup fails closed and rejects ambiguous states',async()=>{assert.equal(await zipState('bad'), '');assert.equal(await zipState('39475',async()=>({ok:false})), '');assert.equal(await zipState('39475',async()=>({ok:true,json:async()=>({places:[{'state abbreviation':'MS'}]})})), 'MS');});
 
 
