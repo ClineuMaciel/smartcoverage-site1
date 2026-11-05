@@ -610,6 +610,18 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
         return 'request-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2)+'-'+Math.random().toString(36).slice(2);
       };
       let callIntentAt='', callAttemptAt='', callbackRequestId=submissionId();
+      // Record the click without delaying or cancelling the phone dialer.
+      document.addEventListener('click',e=>{
+        const link=e.target.closest?.('a[href^="tel:"]');
+        if(!link||e.defaultPrevented)return;
+        const destination=link.getAttribute('href').slice(4);
+        const payload=JSON.stringify({click_id:submissionId(),clicked_at:new Date().toISOString(),destination,page:location.origin+location.pathname,referrer:document.referrer});
+        try{
+          if(navigator.sendBeacon?.('/.netlify/functions/call-click',payload))return;
+          fetch('/.netlify/functions/call-click',{method:'POST',headers:{'Content-Type':'text/plain'},body:payload,keepalive:true}).catch(()=>{});
+        }catch{}
+      });
+
       function openCallback(){
         callIntentAt=new Date().toISOString();
         const panel=document.getElementById('callbackPanel');panel.open=true;
@@ -914,6 +926,7 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
           <li>Insurance interests and details you provide (vehicle/home)</li>
           <li>Technical data: IP, device/browser, referral URL, marketing parameters</li>
         </ul>
+        <h4>Call button activity</h4><p>When you click a call link, we collect the click time, public IP address, browser information, likely device type, page path, referring domain, and destination number. We use these records to compare website activity with telephone reports. A click does not confirm a connected call, and timestamp matches are estimates. These records are not permission for marketing.</p>
         <h4>How We Use Information</h4>
         <ul>
           <li>To match you with one or more providers or licensed agents</li>
@@ -965,3 +978,4 @@ body{background:#fff}.container{max-width:1160px;padding-left:24px;padding-right
   </script>
 </body>
 </html>
+
